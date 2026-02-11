@@ -1,0 +1,9 @@
+name = "{{PROJECT_NAME}}"
+main = "worker.ts"
+compatibility_date = "2024-12-01"
+
+# Optional: custom domain
+# routes = [{ pattern = "{{DOMAIN}}", custom_domain = true }]
+
+[rules]
+  - { type = "Text", globs = ["**/*.html"] }
