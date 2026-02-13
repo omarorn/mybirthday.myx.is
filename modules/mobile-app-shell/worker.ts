@@ -65,12 +65,24 @@ interface PhotoWallItem {
   addedAt: string;
 }
 
+interface PlannerApplication {
+  id: string;
+  slug: string;
+  type: 'host_add' | 'surprise_help';
+  applicantName: string;
+  contact: string;
+  forGuest?: string;
+  note: string;
+  createdAt: string;
+}
+
 const memoryStore = new Map<string, RsvpRecord>();
 const memoryCustomQuestions = new Map<number, QuizQuestion>();
 let memoryQuizSummary: QuizSummary = { totalAnswers: 0, totalCorrect: 0, questionStats: {} };
 let memoryRecentAnswers: QuizRecentAnswer[] = [];
 const memoryTenants = new Map<string, TenantConfig>();
 const memoryPhotoWall = new Map<string, PhotoWallItem[]>();
+const memoryPlannerApplications = new Map<string, PlannerApplication[]>();
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -263,6 +275,24 @@ async function savePhotoWall(env: Env, slug: string, items: PhotoWallItem[]): Pr
   memoryPhotoWall.set(slug, items);
   if (env.QUIZ_DATA) {
     await env.QUIZ_DATA.put(`photowall:${slug}`, JSON.stringify(items));
+  }
+}
+
+async function loadPlannerApplications(env: Env, slug: string): Promise<PlannerApplication[]> {
+  if (!env.QUIZ_DATA) return memoryPlannerApplications.get(slug) ?? [];
+  const raw = await env.QUIZ_DATA.get(`planner:${slug}`);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as PlannerApplication[];
+  } catch {
+    return [];
+  }
+}
+
+async function savePlannerApplications(env: Env, slug: string, items: PlannerApplication[]): Promise<void> {
+  memoryPlannerApplications.set(slug, items);
+  if (env.QUIZ_DATA) {
+    await env.QUIZ_DATA.put(`planner:${slug}`, JSON.stringify(items));
   }
 }
 
@@ -467,12 +497,14 @@ export default {
 
     if (url.pathname === '/api/admin/overview' && request.method === 'GET') {
       if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      const slug = slugify(url.searchParams.get('slug') || 'omars50');
       const rsvps = (await loadAllRsvps(env)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       const attending = rsvps.filter((r) => r.attending);
       const notAttending = rsvps.filter((r) => !r.attending);
       const totalHeads = attending.reduce((sum, r) => sum + (r.partySize ?? 1), 0);
       const summary = await loadQuizSummary(env);
       const recent = await loadRecentAnswers(env);
+      const plannerItems = await loadPlannerApplications(env, slug);
       const questionEntries = Object.entries(summary.questionStats).map(([id, s]) => ({
         id: Number(id),
         total: s.total,
@@ -500,6 +532,13 @@ export default {
           hardestQuestionId: hardest?.id ?? null,
           byQuestion: questionEntries,
           recentAnswers: recent,
+        },
+        planner: {
+          slug,
+          total: plannerItems.length,
+          hostAdds: plannerItems.filter((x) => x.type === 'host_add').length,
+          surpriseHelps: plannerItems.filter((x) => x.type === 'surprise_help').length,
+          recent: plannerItems.slice(0, 12),
         },
       });
     }
@@ -597,6 +636,55 @@ export default {
       const filtered = items.filter((x) => x.id !== id);
       await savePhotoWall(env, slug, filtered);
       return json({ success: true, id, slug });
+    }
+
+    if (url.pathname === '/api/planner/apply' && request.method === 'POST') {
+      let body: {
+        slug?: string;
+        type?: string;
+        applicantName?: string;
+        contact?: string;
+        forGuest?: string;
+        note?: string;
+      };
+      try {
+        body = await request.json();
+      } catch {
+        return json({ error: 'Invalid JSON body' }, 400);
+      }
+
+      const slug = slugify(body.slug || 'omars50');
+      const type = body.type === 'host_add' || body.type === 'surprise_help' ? body.type : null;
+      const applicantName = typeof body.applicantName === 'string' ? body.applicantName.trim() : '';
+      const contact = typeof body.contact === 'string' ? body.contact.trim() : '';
+      const note = typeof body.note === 'string' ? body.note.trim() : '';
+      const forGuest = typeof body.forGuest === 'string' ? body.forGuest.trim() : '';
+
+      if (!slug || !type || !applicantName || !contact || !note) {
+        return json({ error: 'slug, type, applicantName, contact and note are required' }, 400);
+      }
+
+      const application: PlannerApplication = {
+        id: crypto.randomUUID(),
+        slug,
+        type,
+        applicantName,
+        contact,
+        forGuest,
+        note,
+        createdAt: new Date().toISOString(),
+      };
+      const existing = await loadPlannerApplications(env, slug);
+      existing.unshift(application);
+      await savePlannerApplications(env, slug, existing.slice(0, 300));
+      return json({ success: true, application }, 201);
+    }
+
+    if (url.pathname === '/api/planner/applications' && request.method === 'GET') {
+      if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      const slug = slugify(url.searchParams.get('slug') || 'omars50');
+      const items = await loadPlannerApplications(env, slug);
+      return json({ slug, total: items.length, items });
     }
 
     if (url.pathname.startsWith('/api/')) {
