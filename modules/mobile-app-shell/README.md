@@ -40,7 +40,7 @@ mobile-app-shell/
 ## Quick Start
 
 1. Copy module to your project root
-2. Replace `{{SITE_TITLE}}`, `{{ACCENT_COLOR}}`, etc.
+2. Replace branding text and links (title, Facebook event URL, venue map URL) as needed.
 3. Deploy: `npx wrangler deploy`
 
 ## Desktop Phone Mockup

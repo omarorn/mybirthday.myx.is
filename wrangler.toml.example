@@ -4,7 +4,7 @@
 # Copy this file to wrangler.toml and fill in the values.
 # =============================================================================
 
-name = "{{WORKER_NAME}}"
+name = "mybirthday-myx-is"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
@@ -17,24 +17,24 @@ binding = "ASSETS"
 # --- D1 Database ---
 [[d1_databases]]
 binding = "DB"
-database_name = "{{D1_DATABASE_NAME}}"
-database_id = "{{D1_DATABASE_ID}}"
+database_name = "its_my_birthday_db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
 migrations_dir = "migrations"
 
 # --- R2 Storage ---
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "{{R2_BUCKET_NAME}}"
+bucket_name = "its-my-birthday-assets"
 
 # --- KV Namespace ---
 # [[kv_namespaces]]
 # binding = "KV"
-# id = "{{KV_NAMESPACE_ID}}"
+# id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
 # --- Vectorize (Semantic Search) ---
 # [[vectorize]]
 # binding = "VECTORIZE"
-# index_name = "{{VECTORIZE_INDEX_NAME}}"
+# index_name = "REPLACE_WITH_VECTORIZE_INDEX_NAME"
 
 # --- Workers AI ---
 # [ai]
@@ -43,7 +43,7 @@ bucket_name = "{{R2_BUCKET_NAME}}"
 # --- Durable Objects ---
 # [durable_objects]
 # bindings = [
-#   { name = "{{DO_NAME}}", class_name = "{{DO_CLASS}}" }
+#   { name = "REPLACE_WITH_DO_NAME", class_name = "REPLACE_WITH_DO_CLASS" }
 # ]
 
 # --- Cron Triggers ---

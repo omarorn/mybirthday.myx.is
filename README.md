@@ -1,8 +1,8 @@
-# {{PROJECT_NAME}}
+# It's My Birthday
 
-> **{{PROJECT_DESCRIPTION}}**
+> **Party planner and RSVP hub for Omar's 50th birthday**
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/{{GITHUB_ORG}}/{{REPO_NAME}})
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/2076/mybirthday.myx.is)
 
 ## Tech Stack
 
@@ -62,7 +62,7 @@
 
 ```bash
 # Clone the template
-git clone https://github.com/{{GITHUB_ORG}}/{{REPO_NAME}}.git my-project
+git clone https://github.com/2076/mybirthday.myx.is.git my-project
 cd my-project
 
 # Install dependencies
@@ -115,7 +115,7 @@ npm run dev
 
 ```bash
 # Apply database migrations first
-npx wrangler d1 execute {{D1_DATABASE_NAME}} --remote --file=migrations/0001_init.sql
+npx wrangler d1 execute its_my_birthday_db --remote --file=migrations/0001_init.sql
 
 # Deploy worker
 npx wrangler deploy
@@ -125,7 +125,7 @@ npx wrangler deploy
 
 Use the button at the top of this README, or:
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/{{GITHUB_ORG}}/{{REPO_NAME}})
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/2076/mybirthday.myx.is)
 
 This will:
 1. Fork the repository to your GitHub account
@@ -137,7 +137,7 @@ After one-click deploy, you still need to:
 - Create D1 database and R2 bucket manually
 - Set secrets via `wrangler secret put`
 - Update `wrangler.toml` with resource IDs
-- Replace `{{PLACEHOLDER}}` values in `CLAUDE.md`
+- Replace `YOUR_VALUE` values in `CLAUDE.md`
 
 ---
 
@@ -395,7 +395,7 @@ The default permissions allow:
 ## Project Structure
 
 ```
-{{REPO_NAME}}/
+mybirthday.myx.is/
 ├── src/
 │   ├── index.ts              # Main worker entry (Hono app)
 │   ├── routes/               # API route handlers
@@ -520,7 +520,7 @@ CF_API_TOKEN             # For Cloudflare deployment
 # Click "Use this template" on the GitHub repo page
 
 # Option B: Clone manually
-git clone https://github.com/{{GITHUB_ORG}}/{{REPO_NAME}}.git my-project
+git clone https://github.com/2076/mybirthday.myx.is.git my-project
 cd my-project
 rm -rf .git
 git init
@@ -528,7 +528,7 @@ git init
 
 ### 2. Replace Placeholders
 
-Find and replace all `{{PLACEHOLDER}}` values in:
+Find and replace all `YOUR_VALUE` values in:
 
 | File | Placeholders |
 |------|-------------|

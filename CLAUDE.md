@@ -2,11 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) and GitHub Actions agents when working with this repository.
 
-**Project:** {{PROJECT_NAME}} - {{PROJECT_DESCRIPTION}}
-**Owner:** {{OWNER_NAME}} ({{OWNER_EMAIL}})
-**Repository:** github.com/{{GITHUB_ORG}}/{{REPO_NAME}}
-**Production:** https://{{DOMAIN}} | API: https://api.{{DOMAIN}}
-**Philosophy:** {{PROJECT_PHILOSOPHY}}
+**Project:** It's My Birthday - Party planner and RSVP hub for Omar's 50th birthday
+**Owner:** Omar (omar@vertis.is)
+**Repository:** github.com/2076/mybirthday.myx.is
+**Production:** https://mybirthday.myx.is | API: https://api.mybirthday.myx.is
+**Philosophy:** Celebrate with intention, memory, and community.
 
 ---
 
@@ -14,21 +14,21 @@ This file provides guidance to Claude Code (claude.ai/code) and GitHub Actions a
 
 ### Essential Access
 ```
-Main App:       https://{{DOMAIN}}
-API:            https://api.{{DOMAIN}}
-Admin:          https://admin.{{DOMAIN}}
-Staging:        https://staging.{{DOMAIN}}
+Main App:       https://mybirthday.myx.is
+API:            https://api.mybirthday.myx.is
+Admin:          https://admin.mybirthday.myx.is
+Staging:        https://staging.mybirthday.myx.is
 ```
 
 ### Cloudflare Resources
 ```
-Account ID:     {{CLOUDFLARE_ACCOUNT_ID}}
-Account Name:   {{CLOUDFLARE_ACCOUNT_NAME}}
-D1 Database:    {{D1_DATABASE_NAME}} ({{D1_DATABASE_ID}})
-R2 Buckets:     {{R2_BUCKET_NAME}}
-KV Namespaces:  {{KV_NAMESPACE_NAMES}}
-Vectorize:      {{VECTORIZE_INDEX_NAME}} (768-dim, cosine)
-Workers:        {{WORKER_NAMES}}
+Account ID:     REPLACE_WITH_ACCOUNT_ID
+Account Name:   2076
+D1 Database:    its_my_birthday_db (REPLACE_WITH_D1_DATABASE_ID)
+R2 Buckets:     its-my-birthday-assets
+KV Namespaces:  QUIZ_DATA
+Vectorize:      not-configured (768-dim, cosine)
+Workers:        mybirthday-myx-is
 ```
 
 ### Cloudflare Secrets
@@ -65,15 +65,15 @@ Need real-time?        → Durable Objects + WebSocket (not external WS)
 
 ## Project Overview
 
-{{PROJECT_OVERVIEW_DESCRIPTION}}
+A mobile-first party planner and RSVP application for Omar’s 50th birthday. It combines invitation flow, event logistics, and a memory-driven celebration experience inspired by Bók Lífsins.
 
-**Current Status:** {{CURRENT_PHASE}}
+**Current Status:** MVP onboarding and launch preparation
 
 **Tech Stack:**
-- **Frontend:** {{FRONTEND_STACK}} (e.g., Astro + React + TypeScript + Tailwind CSS + Shadcn/UI)
+- **Frontend:** HTML + CSS + vanilla TypeScript (mobile-app-shell) (e.g., Astro + React + TypeScript + Tailwind CSS + Shadcn/UI)
 - **Backend:** Cloudflare Workers + Hono + D1 + R2 + KV
 - **Real-time:** WebSocket with Hibernation API (if applicable)
-- **AI Integration:** {{AI_STACK}} (e.g., Claude API, Gemini, Workers AI)
+- **AI Integration:** Optional: Gemini / Workers AI (not required for MVP) (e.g., Claude API, Gemini, Workers AI)
 - **Deployment:** Cloudflare Pages + Workers
 - **Testing:** Vitest (unit/integration) + Playwright (E2E)
 - **CI/CD:** GitHub Actions + Husky pre-commit hooks
@@ -83,7 +83,7 @@ Need real-time?        → Durable Objects + WebSocket (not external WS)
 ## Repository Structure
 
 ```
-{{REPO_NAME}}/
+mybirthday.myx.is/
 ├── .claude/
 │   ├── rules/                 # Claude Code rules (patterns, security, etc.)
 │   ├── commands/              # Custom slash commands
@@ -169,7 +169,7 @@ const ACCESS_HIERARCHY = {
 ### Schema Pattern (D1/SQLite)
 ```sql
 -- Example core table
-CREATE TABLE {{TABLE_NAME}} (
+CREATE TABLE party_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
   content TEXT,
@@ -189,16 +189,16 @@ CREATE TABLE {{TABLE_NAME}} (
 ### Migration Commands
 ```bash
 # Apply migration locally
-npx wrangler d1 execute {{D1_DATABASE_NAME}} --local --file=migrations/XXX.sql
+npx wrangler d1 execute its_my_birthday_db --local --file=migrations/XXX.sql
 
 # Apply migration remotely (BEFORE deploying code!)
-npx wrangler d1 execute {{D1_DATABASE_NAME}} --remote --file=migrations/XXX.sql
+npx wrangler d1 execute its_my_birthday_db --remote --file=migrations/XXX.sql
 
 # Query database
-npx wrangler d1 execute {{D1_DATABASE_NAME}} --remote --command="SELECT ..."
+npx wrangler d1 execute its_my_birthday_db --remote --command="SELECT ..."
 
 # Backup
-npx wrangler d1 export {{D1_DATABASE_NAME}} --remote --output=backup-$(date +%Y%m%d).sql
+npx wrangler d1 export its_my_birthday_db --remote --output=backup-$(date +%Y%m%d).sql
 ```
 
 ---
@@ -238,7 +238,7 @@ npm run test:coverage      # Coverage report
 npx wrangler deploy
 
 # Additional workers (if applicable)
-npx wrangler deploy --config wrangler-{{WORKER_NAME}}.json
+npx wrangler deploy --config wrangler-mybirthday-myx-is.json
 
 # Cloudflare Pages (if using)
 npm run deploy:pages
@@ -247,10 +247,10 @@ npm run deploy:pages
 ### Emergency Commands
 ```bash
 # Health check
-curl "https://api.{{DOMAIN}}/health"
+curl "https://api.mybirthday.myx.is/health"
 
 # Backup database
-npx wrangler d1 export {{D1_DATABASE_NAME}} --remote --output=backup-$(date +%Y%m%d).sql
+npx wrangler d1 export its_my_birthday_db --remote --output=backup-$(date +%Y%m%d).sql
 
 # Deploy all
 npm run deploy
@@ -457,7 +457,7 @@ const result = await env.DB.prepare(
 ### Customer Data Isolation
 ```typescript
 const record = await c.env.DB.prepare(
-  'SELECT * FROM {{TABLE_NAME}} WHERE id = ? AND owner_id = ?'
+  'SELECT * FROM party_items WHERE id = ? AND owner_id = ?'
 ).bind(recordId, user.id).first();
 
 if (!record) {
@@ -492,13 +492,13 @@ git add package-lock.json
 npx wrangler deploy
 
 # Additional workers - specify config
-npx wrangler deploy --config wrangler-{{WORKER_NAME}}.json
+npx wrangler deploy --config wrangler-mybirthday-myx-is.json
 ```
 
 ### 4. Migration Order
 ```bash
 # ALWAYS deploy migrations BEFORE code
-npx wrangler d1 execute {{D1_DATABASE_NAME}} --remote --file=migrations/XXX.sql
+npx wrangler d1 execute its_my_birthday_db --remote --file=migrations/XXX.sql
 npx wrangler deploy
 ```
 
@@ -570,7 +570,7 @@ Gender:  kk (masculine), kvk (feminine), hk (neuter)
 ### Development (`.env` or `.dev.vars`)
 ```bash
 # See .env.example for all available variables
-JWT_SECRET={{JWT_SECRET}}
+JWT_SECRET=SET_VIA_WRANGLER_SECRET
 ENVIRONMENT=development
 LOG_LEVEL=debug
 ```
@@ -602,7 +602,7 @@ npx wrangler secret put CLOUDFLARE_API_TOKEN
 - [ ] Test locally with `npm run dev`
 
 ### After Deploying
-- [ ] Verify health endpoint: `curl https://api.{{DOMAIN}}/health`
+- [ ] Verify health endpoint: `curl https://api.mybirthday.myx.is/health`
 - [ ] Check Cloudflare dashboard for errors
 - [ ] Test critical user flows
 - [ ] Monitor logs for errors
@@ -633,14 +633,15 @@ npx wrangler secret put CLOUDFLARE_API_TOKEN
 ## 2076 ehf Ecosystem
 
 **Domains:**
-- {{COMPANY_DOMAIN}} - Company website
+- myx.is - Company website
 - myx.is - MyX portal ecosystem
 - eyjar.app - Demo/staging apps
 
 **Related Projects:**
-{{RELATED_PROJECTS}}
+- omar.eyar.app
+- Bók Lífsins quiz experiences
 
 ---
 
 **This file is the single source of truth for Claude Code agents working in this repository.**
-**Last Updated:** {{LAST_UPDATED}}
+**Last Updated:** 2026-02-13

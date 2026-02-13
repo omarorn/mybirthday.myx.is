@@ -1,7 +1,7 @@
 {
-  "name": "{{PROJECT_NAME}}",
+  "name": "its-my-birthday",
   "version": "1.0.0",
-  "description": "{{PROJECT_DESCRIPTION}}",
+  "description": "Party planner and RSVP hub for Omar's 50th birthday",
   "author": "2076 ehf <omar@vertis.is>",
   "license": "MIT",
   "private": true,
@@ -16,17 +16,17 @@
     "build:worker": "wrangler deploy --dry-run --outdir=dist",
     "build:css": "npx @tailwindcss/cli -i ./src/input.css -o ./public/output.css --minify",
     "deploy": "npx wrangler deploy",
-    "deploy:pages": "npm run build && npx wrangler pages deploy dist --project-name={{PAGES_PROJECT_NAME}} --commit-dirty=true",
+    "deploy:pages": "npm run build && npx wrangler pages deploy dist --project-name=its-my-birthday --commit-dirty=true",
     "cf-typegen": "wrangler types",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "db:migrate:local": "npx wrangler d1 execute {{D1_DATABASE_NAME}} --local --file=",
-    "db:migrate:remote": "npx wrangler d1 execute {{D1_DATABASE_NAME}} --remote --file=",
-    "db:query:local": "npx wrangler d1 execute {{D1_DATABASE_NAME}} --local --command=",
-    "db:query:remote": "npx wrangler d1 execute {{D1_DATABASE_NAME}} --remote --command=",
-    "db:backup": "npx wrangler d1 export {{D1_DATABASE_NAME}} --remote --output=backup-$(date +%Y%m%d).sql",
+    "db:migrate:local": "npx wrangler d1 execute its_my_birthday_db --local --file=",
+    "db:migrate:remote": "npx wrangler d1 execute its_my_birthday_db --remote --file=",
+    "db:query:local": "npx wrangler d1 execute its_my_birthday_db --local --command=",
+    "db:query:remote": "npx wrangler d1 execute its_my_birthday_db --remote --command=",
+    "db:backup": "npx wrangler d1 export its_my_birthday_db --remote --output=backup-$(date +%Y%m%d).sql",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -63,7 +63,7 @@
     "tailwindcss": "^4.1.0",
     "typescript": "^5.8.0",
     "vitest": "^4.0.0",
-    "wrangler": "^4.54.0"
+    "wrangler": "^4.65.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -85,10 +85,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/{{GITHUB_ORG}}/{{REPO_NAME}}.git"
+    "url": "https://github.com/2076/mybirthday.myx.is.git"
   },
   "bugs": {
-    "url": "https://github.com/{{GITHUB_ORG}}/{{REPO_NAME}}/issues"
+    "url": "https://github.com/2076/mybirthday.myx.is/issues"
   },
-  "homepage": "https://{{DOMAIN}}"
+  "homepage": "https://mybirthday.myx.is"
 }
