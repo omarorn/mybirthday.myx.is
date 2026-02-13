@@ -1,0 +1,7 @@
+{
+  "portal": "mybirthday",
+  "folder": "mybirthday.myx.is",
+  "domain": "mybirthday.myx.is",
+  "status": "scaffold",
+  "source_template": "myxis/.env copy.example + myxis/wrangler.jsonc"
+}

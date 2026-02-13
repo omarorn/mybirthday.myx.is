@@ -1,0 +1,36 @@
+{
+  "name": "myxis",
+  "main": "./dist/index.js",
+  "assets": {
+    "directory": "./dist"
+  },
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "vars": {
+    "APP_NAME": "MYX.IS"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "114d9ebdbb06405496b84577e2ea1949"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "myxis",
+      "database_id": "dbcd44df-f34a-48aa-b2fe-4281f0cc1b44"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "myxis-customer-workflow",
+      "binding": "CUSTOMER_WORKFLOW",
+      "class_name": "CustomerWorkflow"
+    }
+  ]
+}
