@@ -1,110 +1,146 @@
 {
   "generatedAt": "2026-02-13",
   "scope": [
-    "modules/mobile-app-shell/index.html"
+    "modules/mobile-app-shell/index.html",
+    "modules/mobile-app-shell/worker.ts"
   ],
   "summary": {
-    "fixed": 34,
+    "fixed": 22,
     "allowed": 8,
     "remaining": 0
   },
   "items": [
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 396,
-      "original": "2076 PARTY APP",
-      "suggested": "2076 PARTÝAPP",
+      "line": 781,
+      "original": "Byrja mitt eigið partý-app",
+      "suggested": "Byrja mitt eigið partýforrit",
       "status": "✅"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 415,
-      "original": "MOBILE EVENT HUB",
-      "suggested": "FARSÍMA VIÐBURÐAMIÐJA",
+      "line": 791,
+      "original": "Gestir geta klónað viðburðinn yfir í eigið app.",
+      "suggested": "Gestir geta klónað viðburðinn yfir í eigið forrit.",
       "status": "✅"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 460,
-      "original": "Yes, I'll attend",
-      "suggested": "Já, ég mæti",
+      "line": 1355,
+      "original": "Stofna nýtt viðburðarapp...",
+      "suggested": "Stofna nýtt viðburðarforrit...",
       "status": "✅"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
+      "line": 1377,
+      "original": "Nýtt app tilbúið",
+      "suggested": "Nýtt viðburðarforrit tilbúið",
+      "status": "✅"
+    },
+    {
+      "file": "modules/mobile-app-shell/index.html",
+      "line": 745,
+      "original": "Partý planner / Surprise umsókn",
+      "suggested": "Partýskipulag / óvænt umsókn",
+      "status": "✅"
+    },
+    {
+      "file": "modules/mobile-app-shell/index.html",
+      "line": 812,
+      "original": "Not Mætir",
+      "suggested": "Mætir ekki",
+      "status": "✅"
+    },
+    {
+      "file": "modules/mobile-app-shell/worker.ts",
       "line": 461,
-      "original": "No, can't make it",
-      "suggested": "Nei, kemst ekki",
+      "original": "Unauthorized",
+      "suggested": "Aðgangur ekki leyfður",
+      "status": "✅"
+    },
+    {
+      "file": "modules/mobile-app-shell/worker.ts",
+      "line": 482,
+      "original": "Invalid JSON body",
+      "suggested": "Ógilt JSON-innihald",
+      "status": "✅"
+    },
+    {
+      "file": "modules/mobile-app-shell/worker.ts",
+      "line": 539,
+      "original": "Slug already exists",
+      "suggested": "Slóð er þegar í notkun",
+      "status": "✅"
+    },
+    {
+      "file": "modules/mobile-app-shell/worker.ts",
+      "line": 563,
+      "original": "Event not found",
+      "suggested": "Viðburður fannst ekki",
+      "status": "✅"
+    },
+    {
+      "file": "modules/mobile-app-shell/worker.ts",
+      "line": 598,
+      "original": "(Copy)",
+      "suggested": "(Afrit)",
       "status": "✅"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 471,
-      "original": "Links, Directions, and To-Do",
-      "suggested": "Tenglar, leiðir og verkefnalisti",
-      "status": "✅"
-    },
-    {
-      "file": "modules/mobile-app-shell/index.html",
-      "line": 607,
-      "original": "Instagram hashtag wall + host-curated photos.",
-      "suggested": "Instagram myllumerkjaveggur + myndir valdar af gestgjafa.",
-      "status": "✅"
-    },
-    {
-      "file": "modules/mobile-app-shell/index.html",
-      "line": 423,
+      "line": 784,
       "original": "Bond",
       "suggested": "leyft þemaheiti",
       "status": "⚠️"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 424,
+      "line": 785,
       "original": "Death Becomes Her",
       "suggested": "leyft þemaheiti",
       "status": "⚠️"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 425,
+      "line": 786,
       "original": "Pink Panther",
       "suggested": "leyft þemaheiti",
       "status": "⚠️"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 426,
+      "line": 787,
       "original": "80s Retro",
       "suggested": "leyft þemaheiti",
       "status": "⚠️"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 455,
+      "line": 542,
       "original": "SMS",
       "suggested": "leyft tækniskammstöfun",
       "status": "⚠️"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 456,
+      "line": 543,
       "original": "Google",
       "suggested": "leyft vörumerki",
       "status": "⚠️"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 669,
-      "original": "RSVP",
-      "suggested": "leyft viðburðarhugtak",
+      "line": 714,
+      "original": "Instagram",
+      "suggested": "leyft vörumerki",
       "status": "⚠️"
     },
     {
       "file": "modules/mobile-app-shell/index.html",
-      "line": 614,
-      "original": "Instagram",
-      "suggested": "leyft vörumerki",
+      "line": 829,
+      "original": "RSVP",
+      "suggested": "leyft viðburðarhugtak",
       "status": "⚠️"
     }
   ]

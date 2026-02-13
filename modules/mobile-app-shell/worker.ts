@@ -76,6 +76,21 @@ interface PlannerApplication {
   createdAt: string;
 }
 
+interface EventRecord {
+  id: string;
+  ownerId: string;
+  slug: string;
+  title: string;
+  description?: string;
+  startTime: string;
+  endTime?: string;
+  timezone?: string;
+  published: boolean;
+  metadata?: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const memoryStore = new Map<string, RsvpRecord>();
 const memoryCustomQuestions = new Map<number, QuizQuestion>();
 let memoryQuizSummary: QuizSummary = { totalAnswers: 0, totalCorrect: 0, questionStats: {} };
@@ -83,6 +98,9 @@ let memoryRecentAnswers: QuizRecentAnswer[] = [];
 const memoryTenants = new Map<string, TenantConfig>();
 const memoryPhotoWall = new Map<string, PhotoWallItem[]>();
 const memoryPlannerApplications = new Map<string, PlannerApplication[]>();
+const memoryEvents = new Map<string, EventRecord>();
+const memoryEventSlugIndex = new Map<string, string>();
+const memoryOwnerEventIds = new Map<string, string[]>();
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -296,6 +314,105 @@ async function savePlannerApplications(env: Env, slug: string, items: PlannerApp
   }
 }
 
+function resolveOwnerId(request: Request): string {
+  return (request.headers.get('x-owner-id') || '').trim();
+}
+
+async function loadOwnerEventIds(env: Env, ownerId: string): Promise<string[]> {
+  if (!env.QUIZ_DATA) return memoryOwnerEventIds.get(ownerId) ?? [];
+  const raw = await env.QUIZ_DATA.get(`event:owner:${ownerId}`);
+  if (!raw) return [];
+  try {
+    const ids = JSON.parse(raw) as string[];
+    return Array.isArray(ids) ? ids : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveOwnerEventIds(env: Env, ownerId: string, ids: string[]): Promise<void> {
+  memoryOwnerEventIds.set(ownerId, ids);
+  if (env.QUIZ_DATA) {
+    await env.QUIZ_DATA.put(`event:owner:${ownerId}`, JSON.stringify(ids));
+  }
+}
+
+async function registerOwnerEventId(env: Env, ownerId: string, eventId: string): Promise<void> {
+  const current = await loadOwnerEventIds(env, ownerId);
+  const next = [eventId, ...current.filter((x) => x !== eventId)].slice(0, 80);
+  await saveOwnerEventIds(env, ownerId, next);
+}
+
+async function loadEventById(env: Env, id: string): Promise<EventRecord | null> {
+  if (!env.QUIZ_DATA) return memoryEvents.get(id) ?? null;
+  const raw = await env.QUIZ_DATA.get(`event:id:${id}`);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as EventRecord;
+  } catch {
+    return null;
+  }
+}
+
+async function loadEventBySlug(env: Env, slug: string): Promise<EventRecord | null> {
+  if (!env.QUIZ_DATA) {
+    const eventId = memoryEventSlugIndex.get(slug);
+    return eventId ? memoryEvents.get(eventId) ?? null : null;
+  }
+  const eventId = await env.QUIZ_DATA.get(`event:slug:${slug}`);
+  if (!eventId) return null;
+  return loadEventById(env, eventId);
+}
+
+async function saveEvent(env: Env, event: EventRecord): Promise<void> {
+  memoryEvents.set(event.id, event);
+  memoryEventSlugIndex.set(event.slug, event.id);
+  if (env.QUIZ_DATA) {
+    await env.QUIZ_DATA.put(`event:id:${event.id}`, JSON.stringify(event));
+    await env.QUIZ_DATA.put(`event:slug:${event.slug}`, event.id);
+  }
+}
+
+function buildEventRecord(
+  payload: {
+    title?: string;
+    slug?: string;
+    description?: string;
+    startTime?: string;
+    endTime?: string;
+    timezone?: string;
+    published?: boolean;
+    metadata?: Record<string, string>;
+  },
+  ownerId: string,
+): EventRecord {
+  const now = new Date().toISOString();
+  const title = typeof payload.title === 'string' ? payload.title.trim() : '';
+  const startTime = typeof payload.startTime === 'string' ? payload.startTime.trim() : '';
+  if (!title || !startTime) {
+    throw new Error('Heiti og upphafstími vantar');
+  }
+  const slugSource = payload.slug || payload.title || crypto.randomUUID();
+  const slug = slugify(slugSource);
+  if (!slug || slug.length < 3) {
+    throw new Error('gild slóð er nauðsynleg');
+  }
+  return {
+    id: crypto.randomUUID(),
+    ownerId,
+    slug,
+    title,
+    description: typeof payload.description === 'string' ? payload.description.trim() : '',
+    startTime,
+    endTime: typeof payload.endTime === 'string' ? payload.endTime.trim() : '',
+    timezone: typeof payload.timezone === 'string' ? payload.timezone.trim() : '',
+    published: Boolean(payload.published),
+    metadata: payload.metadata && typeof payload.metadata === 'object' ? payload.metadata : {},
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 async function recordQuizAnswer(
   env: Env,
   question: QuizQuestion,
@@ -339,12 +456,250 @@ export default {
       return new Response(null, { status: 204 });
     }
 
+    if (url.pathname === '/api/events/create' && request.method === 'POST') {
+      const ownerId = resolveOwnerId(request);
+      if (!ownerId) return json({ error: 'Aðgangur ekki leyfður' }, 401);
+
+      let body: {
+        title?: string;
+        slug?: string;
+        description?: string;
+        startTime?: string;
+        endTime?: string;
+        timezone?: string;
+        published?: boolean;
+        metadata?: Record<string, string>;
+        type?: string;
+        honoree?: string;
+        date_time?: string;
+        location?: string;
+        privacy?: string;
+        default_theme?: string;
+      };
+      try {
+        body = await request.json();
+      } catch {
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
+      }
+
+      const mappedTitle =
+        typeof body.title === 'string' && body.title.trim()
+          ? body.title.trim()
+          : typeof body.honoree === 'string' && body.honoree.trim()
+            ? `${body.honoree.trim()}'s Party`
+            : '';
+      const mappedStartTime =
+        typeof body.startTime === 'string' && body.startTime.trim()
+          ? body.startTime.trim()
+          : typeof body.date_time === 'string'
+            ? body.date_time.trim()
+            : '';
+      const mappedDescription =
+        typeof body.description === 'string' && body.description.trim()
+          ? body.description.trim()
+          : typeof body.location === 'string'
+            ? body.location.trim()
+            : '';
+      const metadata: Record<string, string> = {
+        ...(body.metadata && typeof body.metadata === 'object' ? body.metadata : {}),
+      };
+      if (typeof body.type === 'string' && body.type.trim()) metadata.type = body.type.trim();
+      if (typeof body.honoree === 'string' && body.honoree.trim()) metadata.honoree = body.honoree.trim();
+      if (typeof body.location === 'string' && body.location.trim()) metadata.location = body.location.trim();
+      if (typeof body.privacy === 'string' && body.privacy.trim()) metadata.privacy = body.privacy.trim();
+      if (typeof body.default_theme === 'string' && body.default_theme.trim()) {
+        metadata.defaultTheme = body.default_theme.trim();
+      }
+
+      let event: EventRecord;
+      try {
+        event = buildEventRecord(
+          {
+            title: mappedTitle,
+            slug: body.slug,
+            description: mappedDescription,
+            startTime: mappedStartTime,
+            endTime: body.endTime,
+            timezone: body.timezone,
+            published:
+              typeof body.published === 'boolean'
+                ? body.published
+                : typeof body.privacy === 'string'
+                  ? body.privacy.trim() === 'public'
+                  : false,
+            metadata,
+          },
+          ownerId,
+        );
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : 'Ógild viðburðargögn' }, 400);
+      }
+
+      const existingBySlug = await loadEventBySlug(env, event.slug);
+      if (existingBySlug) return json({ error: 'Slóð er þegar í notkun', slug: event.slug }, 409);
+
+      await saveEvent(env, event);
+      await registerOwnerEventId(env, ownerId, event.id);
+
+      return json({ success: true, eventId: event.id, event }, 201);
+    }
+
+    const eventCloneMatch = url.pathname.match(/^\/api\/events\/([^/]+)\/clone$/);
+    if (eventCloneMatch && request.method === 'POST') {
+      const ownerId = resolveOwnerId(request);
+      const admin = isAdmin(request, env);
+      const effectiveOwnerId = ownerId || (admin ? 'admin' : '');
+      if (!effectiveOwnerId) return json({ error: 'Aðgangur ekki leyfður' }, 401);
+
+      let sourceEventId = '';
+      try {
+        sourceEventId = decodeURIComponent(eventCloneMatch[1] || '').trim();
+      } catch {
+        return json({ error: 'Viðburðaauðkenni er ógilt' }, 400);
+      }
+      if (!sourceEventId) return json({ error: 'Viðburðaauðkenni vantar' }, 400);
+
+      const sourceEvent = await loadEventById(env, sourceEventId);
+      if (!sourceEvent) return json({ error: 'Viðburður fannst ekki' }, 404);
+
+      if (!admin && sourceEvent.ownerId !== effectiveOwnerId && !sourceEvent.published) {
+        return json({ error: 'Óheimilt' }, 403);
+      }
+
+      let body: {
+        title?: string;
+        slug?: string;
+        description?: string;
+        startTime?: string;
+        endTime?: string;
+        timezone?: string;
+        metadata?: Record<string, string>;
+      } = {};
+      try {
+        const raw = await request.text();
+        body = raw.trim() ? (JSON.parse(raw) as typeof body) : {};
+      } catch {
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
+      }
+
+      const baseSlug = slugify(body.slug || `${sourceEvent.slug}-copy`);
+      if (!baseSlug) return json({ error: 'gild slóð er nauðsynleg' }, 400);
+      let nextSlug = baseSlug;
+      let suffix = 2;
+      while (await loadEventBySlug(env, nextSlug)) {
+        nextSlug = `${baseSlug}-${suffix}`;
+        suffix += 1;
+      }
+
+      let clone: EventRecord;
+      try {
+        clone = buildEventRecord(
+          {
+            title: body.title || `${sourceEvent.title} (Afrit)`,
+            slug: nextSlug,
+            description: typeof body.description === 'string' ? body.description : sourceEvent.description,
+            startTime: typeof body.startTime === 'string' ? body.startTime : sourceEvent.startTime,
+            endTime: typeof body.endTime === 'string' ? body.endTime : sourceEvent.endTime,
+            timezone: typeof body.timezone === 'string' ? body.timezone : sourceEvent.timezone,
+            published: false,
+            metadata: {
+              ...(sourceEvent.metadata ?? {}),
+              ...(body.metadata && typeof body.metadata === 'object' ? body.metadata : {}),
+              clonedFromEventId: sourceEvent.id,
+            },
+          },
+          effectiveOwnerId,
+        );
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : 'Ógild afritunargögn' }, 400);
+      }
+
+      await saveEvent(env, clone);
+      await registerOwnerEventId(env, effectiveOwnerId, clone.id);
+
+      if (env.QUIZ_DATA) {
+        const copiedKeys: string[] = [];
+        for (const suffixToCopy of ['links', 'schedule', 'settings', 'secret_timeline', 'quiz_meta', 'photo_meta']) {
+          const sourceValue = await env.QUIZ_DATA.get(`event:${sourceEvent.id}:${suffixToCopy}`);
+          if (sourceValue !== null) {
+            await env.QUIZ_DATA.put(`event:${clone.id}:${suffixToCopy}`, sourceValue);
+            copiedKeys.push(suffixToCopy);
+          }
+        }
+        return json({ success: true, sourceEventId: sourceEvent.id, eventId: clone.id, event: clone, copiedKeys }, 201);
+      }
+
+      return json({ success: true, sourceEventId: sourceEvent.id, eventId: clone.id, event: clone, copiedKeys: [] }, 201);
+    }
+
+    if (url.pathname === '/api/dashboard/me' && request.method === 'GET') {
+      const ownerId = resolveOwnerId(request);
+      if (!ownerId) return json({ error: 'Aðgangur ekki leyfður' }, 401);
+
+      const ids = await loadOwnerEventIds(env, ownerId);
+      const loaded = await Promise.all(ids.map(async (id) => loadEventById(env, id)));
+      const events = loaded
+        .filter((event): event is EventRecord => Boolean(event))
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      const drafts = events.filter((event) => !event.published);
+      const published = events.filter((event) => event.published);
+
+      return json({
+        ownerId,
+        total: events.length,
+        events,
+        adminEvents: events,
+        drafts,
+        published,
+        templates: [],
+      });
+    }
+
+    const publicEventMatch = url.pathname.match(/^\/api\/events\/([^/]+)\/public$/);
+    if (publicEventMatch && request.method === 'GET') {
+      let rawSlug = '';
+      try {
+        rawSlug = decodeURIComponent(publicEventMatch[1] || '').trim();
+      } catch {
+        return json({ error: 'slug is invalid' }, 400);
+      }
+      const slug = slugify(rawSlug);
+      if (!slug) return json({ error: 'Slóð vantar' }, 400);
+
+      const event = await loadEventBySlug(env, slug);
+      if (!event || !event.published) return json({ error: 'Viðburður fannst ekki' }, 404);
+
+      return json({
+        event: {
+          id: event.id,
+          slug: event.slug,
+          title: event.title,
+          description: event.description ?? '',
+          startTime: event.startTime,
+          date_time: event.startTime,
+          endTime: event.endTime ?? '',
+          timezone: event.timezone ?? '',
+          published: event.published,
+          metadata: event.metadata ?? {},
+          createdAt: event.createdAt,
+          updatedAt: event.updatedAt,
+        },
+        cta: {
+          canRsvp: true,
+          canPlayQuiz: true,
+          canViewPhotoWall: true,
+          canApplyAsPlanner: true,
+          canClone: true,
+        },
+      });
+    }
+
     if (url.pathname === '/api/rsvp' && request.method === 'POST') {
       let body: Partial<RsvpRecord> & { method?: string; contact?: string; attending?: boolean };
       try {
         body = await request.json();
       } catch {
-        return json({ error: 'Invalid JSON body' }, 400);
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
       }
 
       const method = body.method === 'sms' || body.method === 'google' ? body.method : null;
@@ -352,7 +707,7 @@ export default {
       const name = typeof body.name === 'string' && body.name.trim() ? body.name.trim() : 'Guest';
 
       if (!method || !contact || typeof body.attending !== 'boolean') {
-        return json({ error: 'method, contact and attending(boolean) are required' }, 400);
+        return json({ error: 'Innskráningaraðferð, tengilið og mætingarstaða vantar' }, 400);
       }
 
       const id = normalizeId(method, contact);
@@ -403,7 +758,7 @@ export default {
       const idParam = url.searchParams.get('id');
       const id = idParam ? Number(idParam) : NaN;
       if (!Number.isInteger(id)) {
-        return json({ error: 'id query param is required' }, 400);
+        return json({ error: 'Auðkenni í fyrirspurn vantar' }, 400);
       }
       const all = await getAllQuestions(env);
       const question = all.find((q) => q.id === id);
@@ -417,10 +772,10 @@ export default {
       try {
         body = await request.json();
       } catch {
-        return json({ error: 'Invalid JSON body' }, 400);
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
       }
       if (!Number.isInteger(body.id) || !Number.isInteger(body.choice)) {
-        return json({ error: 'id and choice(integer) are required' }, 400);
+        return json({ error: 'Auðkenni og valkostsvísir vantar' }, 400);
       }
       const all = await getAllQuestions(env);
       const question = all.find((q) => q.id === body.id);
@@ -445,12 +800,12 @@ export default {
     }
 
     if (url.pathname === '/api/quiz/admin/question' && request.method === 'POST') {
-      if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      if (!isAdmin(request, env)) return json({ error: 'Aðgangur ekki leyfður' }, 401);
       let body: Partial<QuizQuestion> & { opts?: string[] };
       try {
         body = await request.json();
       } catch {
-        return json({ error: 'Invalid JSON body' }, 400);
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
       }
       if (
         typeof body.q !== 'string' ||
@@ -460,7 +815,7 @@ export default {
         typeof body.cat !== 'string' ||
         !Number.isInteger(body.yr)
       ) {
-        return json({ error: 'q, opts[], ans, cat, yr are required' }, 400);
+        return json({ error: 'Vantar lögboðin spurningargögn' }, 400);
       }
       const all = await getAllQuestions(env);
       const maxId = all.reduce((m, q) => Math.max(m, q.id), 0);
@@ -484,10 +839,10 @@ export default {
     }
 
     if (url.pathname === '/api/quiz/admin/question' && request.method === 'DELETE') {
-      if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      if (!isAdmin(request, env)) return json({ error: 'Aðgangur ekki leyfður' }, 401);
       const idParam = url.searchParams.get('id');
       const id = idParam ? Number(idParam) : NaN;
-      if (!Number.isInteger(id)) return json({ error: 'id query param is required' }, 400);
+      if (!Number.isInteger(id)) return json({ error: 'Auðkenni í fyrirspurn vantar' }, 400);
       if (quizQuestions.some((q) => q.id === id)) {
         return json({ error: 'Base questions cannot be deleted. Only admin-added questions can be deleted.' }, 400);
       }
@@ -496,7 +851,7 @@ export default {
     }
 
     if (url.pathname === '/api/admin/overview' && request.method === 'GET') {
-      if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      if (!isAdmin(request, env)) return json({ error: 'Aðgangur ekki leyfður' }, 401);
       const slug = slugify(url.searchParams.get('slug') || 'omars50');
       const rsvps = (await loadAllRsvps(env)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       const attending = rsvps.filter((r) => r.attending);
@@ -548,7 +903,7 @@ export default {
       try {
         body = await request.json();
       } catch {
-        return json({ error: 'Invalid JSON body' }, 400);
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
       }
       const source = body.hashtag || body.instagramHandle || body.title || '';
       const slug = slugify(source);
@@ -557,7 +912,7 @@ export default {
       }
       const existing = await loadTenant(env, slug);
       if (existing) {
-        return json({ error: 'Slug already exists', slug }, 409);
+        return json({ error: 'Slóð er þegar í notkun', slug }, 409);
       }
       const hashtagRaw = (body.hashtag || slug).replace(/^#/, '');
       const tenant: TenantConfig = {
@@ -579,7 +934,7 @@ export default {
 
     if (url.pathname === '/api/hosting/tenant' && request.method === 'GET') {
       const slug = url.searchParams.get('slug') || getSlugFromPath(url.pathname) || '';
-      if (!slug) return json({ error: 'slug is required' }, 400);
+      if (!slug) return json({ error: 'Slóð vantar' }, 400);
       const tenant = await loadTenant(env, slug);
       if (!tenant) return json({ error: 'Tenant not found' }, 404);
       return json({ tenant });
@@ -603,16 +958,16 @@ export default {
     }
 
     if (url.pathname === '/api/photowall/item' && request.method === 'POST') {
-      if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      if (!isAdmin(request, env)) return json({ error: 'Aðgangur ekki leyfður' }, 401);
       let body: { slug?: string; imageUrl?: string; caption?: string; sourceUrl?: string };
       try {
         body = await request.json();
       } catch {
-        return json({ error: 'Invalid JSON body' }, 400);
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
       }
       const slug = slugify(body.slug || 'omars50');
-      if (!slug) return json({ error: 'slug is required' }, 400);
-      if (!body.imageUrl || typeof body.imageUrl !== 'string') return json({ error: 'imageUrl is required' }, 400);
+      if (!slug) return json({ error: 'Slóð vantar' }, 400);
+      if (!body.imageUrl || typeof body.imageUrl !== 'string') return json({ error: 'Myndaslóð vantar' }, 400);
       const item: PhotoWallItem = {
         id: crypto.randomUUID(),
         slug,
@@ -628,10 +983,10 @@ export default {
     }
 
     if (url.pathname === '/api/photowall/item' && request.method === 'DELETE') {
-      if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      if (!isAdmin(request, env)) return json({ error: 'Aðgangur ekki leyfður' }, 401);
       const slug = slugify(url.searchParams.get('slug') || 'omars50');
       const id = url.searchParams.get('id') || '';
-      if (!id) return json({ error: 'id is required' }, 400);
+      if (!id) return json({ error: 'Auðkenni vantar' }, 400);
       const items = await loadPhotoWall(env, slug);
       const filtered = items.filter((x) => x.id !== id);
       await savePhotoWall(env, slug, filtered);
@@ -650,7 +1005,7 @@ export default {
       try {
         body = await request.json();
       } catch {
-        return json({ error: 'Invalid JSON body' }, 400);
+        return json({ error: 'Ógilt JSON-innihald' }, 400);
       }
 
       const slug = slugify(body.slug || 'omars50');
@@ -661,7 +1016,7 @@ export default {
       const forGuest = typeof body.forGuest === 'string' ? body.forGuest.trim() : '';
 
       if (!slug || !type || !applicantName || !contact || !note) {
-        return json({ error: 'slug, type, applicantName, contact and note are required' }, 400);
+        return json({ error: 'Vantar lögboðin umsóknargögn' }, 400);
       }
 
       const application: PlannerApplication = {
@@ -681,7 +1036,7 @@ export default {
     }
 
     if (url.pathname === '/api/planner/applications' && request.method === 'GET') {
-      if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401);
+      if (!isAdmin(request, env)) return json({ error: 'Aðgangur ekki leyfður' }, 401);
       const slug = slugify(url.searchParams.get('slug') || 'omars50');
       const items = await loadPlannerApplications(env, slug);
       return json({ slug, total: items.length, items });
