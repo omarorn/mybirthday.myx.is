@@ -9,13 +9,19 @@ This project uses a hybrid authentication approach to migrate from password-base
 ## Authentication Method Types
 
 ```typescript
-type AuthMethod = 'otp_only' | 'password_fallback';
+type AuthMethod = 'otp_only' | 'password_fallback' | 'passkey';
 ```
 
 | Method | Description | Use Case |
 |--------|-------------|----------|
 | `otp_only` | Auth0 passwordless (SMS/Email OTP) | New users, migrated users |
 | `password_fallback` | Password hash stored in database | Existing users during migration |
+| `passkey` | WebAuthn/FIDO2 passkeys | Future-preferred, phishing-resistant |
+
+**Note (2025):** Consider passkeys (WebAuthn) as the ultimate migration target. Passkeys are:
+- Phishing-resistant (unlike SMS OTP which is vulnerable to SIM-swap and Storm-2372 style attacks)
+- User-friendly (biometric or device PIN)
+- Supported by Auth0 and all major browsers
 
 ## Database Schema Pattern
 

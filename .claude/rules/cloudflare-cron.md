@@ -155,10 +155,12 @@ async function cleanupExpiredSessions(env: Env): Promise<number> {
  │ ┌───────────── hour (0 - 23)
  │ │ ┌───────────── day of month (1 - 31)
  │ │ │ ┌───────────── month (1 - 12)
- │ │ │ │ ┌───────────── day of week (0 - 6) (0 is Sunday)
+ │ │ │ │ ┌───────────── day of week (0 - 7) (0 and 7 are Sunday)
  │ │ │ │ │
  * * * * *
 ```
+
+**Note:** Cloudflare Workers follows POSIX cron standard where both 0 and 7 represent Sunday. Common convention: 1=Monday through 6=Saturday.
 
 ### Common Patterns
 
