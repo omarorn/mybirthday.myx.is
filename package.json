@@ -8,6 +8,8 @@
     "deploy": "wrangler deploy --config wrangler.toml",
     "build": "wrangler deploy --dry-run --config wrangler.toml",
     "lint": "eslint \"modules/mobile-app-shell/**/*.ts\" \"src/**/*.ts\" \"tests/**/*.ts\" \"vitest.config.ts\"",
+    "generate:openapi": "node scripts/generate-openapi.js",
+    "check:openapi-sync": "npm run generate:openapi && git diff --exit-code -- docs/openapi.json",
     "validate:openapi": "node scripts/validate-openapi.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

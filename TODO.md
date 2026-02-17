@@ -29,16 +29,25 @@ Last updated: 2026-02-17
 8. Added API documentation artifacts:
    - human-readable reference: `docs/api.md`
    - machine-readable spec: `docs/openapi.json`
+9. Added OpenAPI validation gate:
+   - validator script: `scripts/validate-openapi.js`
+   - npm script: `npm run validate:openapi`
+   - CI check in `.github/workflows/ci.yml`
+10. Added OpenAPI auto-generation and sync gate:
+    - generator script: `scripts/generate-openapi.js`
+    - npm scripts:
+      - `npm run generate:openapi`
+      - `npm run check:openapi-sync`
+    - CI now fails when `docs/openapi.json` is out of sync with routes in `worker.ts`.
 
 ## Current Priorities
 
-1. Clean up documentation drift:
-   - align `README.md` + `CLAUDE.md` with actual architecture (raw Worker + vanilla SPA).
+1. Keep docs and OpenAPI spec in sync with `worker.ts` as routes evolve.
 2. Add E2E smoke coverage (optional, Playwright) for core user flows:
    - RSVP submit
    - Quiz answer submit
    - Event creation from dashboard context
-3. Keep OpenAPI spec in sync with `worker.ts` as routes evolve.
+3. Improve generated OpenAPI detail (richer request/response schemas per route).
 
 ## Next Technical Upgrades
 

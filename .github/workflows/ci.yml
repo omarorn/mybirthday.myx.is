@@ -24,6 +24,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Check OpenAPI Sync
+        run: npm run check:openapi-sync
+
       - name: Validate OpenAPI
         run: npm run validate:openapi
 

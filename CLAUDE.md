@@ -17,6 +17,7 @@ Repository guidance for coding agents.
 npm run dev
 npm run build
 npm run lint
+npm run validate:openapi
 npm run typecheck
 npm run test
 npm run deploy
@@ -51,7 +52,7 @@ npm run deploy
 - Minimum local gate before major merges:
 
 ```bash
-npm run lint && npm run build && npm run typecheck && npm run test
+npm run lint && npm run build && npm run validate:openapi && npm run typecheck && npm run test
 ```
 
 ## Common Errors to Avoid

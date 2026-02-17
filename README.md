@@ -29,6 +29,9 @@ Cloudflare Worker app for Omar's birthday portal (RSVP, quiz, events, media).
 - `npm run dev`: local Worker dev server
 - `npm run build`: Wrangler dry-run bundle check
 - `npm run lint`: ESLint checks
+- `npm run generate:openapi`: regenerates `docs/openapi.json` from `worker.ts` routes
+- `npm run check:openapi-sync`: fails if committed OpenAPI spec is stale
+- `npm run validate:openapi`: validates `docs/openapi.json`
 - `npm run typecheck`: TypeScript checks
 - `npm run test`: Vitest tests
 - `npm run deploy`: deploy Worker
