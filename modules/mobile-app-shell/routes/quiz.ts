@@ -1,5 +1,5 @@
 /**
- * Quiz route handlers, gamification, and persistence.
+ * Quiz route handlers, gamification, and D1 persistence.
  */
 
 import type {
@@ -16,58 +16,81 @@ import {
   parseJsonBody,
   readStringField,
   sanitizeQuestions,
-  parseQuizSummary,
-  parseRecentAnswers,
   isAdmin,
 } from "../helpers";
-import {
-  memoryCustomQuestions,
-  memoryPlayerStats,
-  getMemoryQuizSummary,
-  setMemoryQuizSummary,
-  getMemoryRecentAnswers,
-  setMemoryRecentAnswers,
-} from "../state";
 
-// ── Custom question persistence ─────────────────────────────────
+const DEFAULT_SLUG = "global";
+
+// ── Row mapping ─────────────────────────────────────────────────
+
+function rowToQuestion(row: Record<string, unknown>): QuizQuestion {
+  return {
+    id: row.id as number,
+    yr: (row.year as number) || 0,
+    cat: (row.category as string) || "",
+    q: row.question as string,
+    hint: (row.hint as string) || undefined,
+    opts: JSON.parse(row.options as string) as string[],
+    ans: row.answer as number,
+    exp: (row.explanation as string) || "",
+    fun: (row.fun_fact as string) || "",
+  };
+}
+
+function rowToPlayerStats(row: Record<string, unknown>): PlayerStats {
+  return {
+    playerId: row.player_id as string,
+    playerName: row.player_name as string,
+    totalPoints: (row.total_points as number) || 0,
+    currentStreak: (row.current_streak as number) || 0,
+    bestStreak: (row.best_streak as number) || 0,
+    totalAnswers: (row.total_answers as number) || 0,
+    totalCorrect: (row.total_correct as number) || 0,
+    lastAnswerDate: (row.last_answer_date as string) || null,
+  };
+}
+
+// ── Custom question persistence (D1) ────────────────────────────
 
 async function loadCustomQuizQuestions(env: Env): Promise<QuizQuestion[]> {
-  if (!env.QUIZ_DATA) {
-    return Array.from(memoryCustomQuestions.values());
-  }
-  const listed = await env.QUIZ_DATA.list({ prefix: "quiz_custom:" });
-  const records = await Promise.all(
-    listed.keys.map(async (key) => {
-      const raw = await env.QUIZ_DATA!.get(key.name);
-      if (!raw) return null;
-      try {
-        return JSON.parse(raw) as QuizQuestion;
-      } catch {
-        return null;
-      }
-    }),
-  );
-  return records.filter(Boolean) as QuizQuestion[];
+  const result = await env.DB.prepare(
+    "SELECT * FROM quiz_questions WHERE slug = ? ORDER BY id ASC",
+  )
+    .bind(DEFAULT_SLUG)
+    .all();
+  return (result.results ?? []).map(rowToQuestion);
 }
 
 async function saveCustomQuizQuestion(
   env: Env,
   question: QuizQuestion,
 ): Promise<void> {
-  memoryCustomQuestions.set(question.id, question);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(
-      `quiz_custom:${question.id}`,
-      JSON.stringify(question),
-    );
-  }
+  await env.DB.prepare(
+    `INSERT INTO quiz_questions (id, slug, question, options, answer, category, created_at, year, hint, explanation, fun_fact)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      question.id,
+      DEFAULT_SLUG,
+      question.q,
+      JSON.stringify(question.opts),
+      question.ans,
+      question.cat || "",
+      new Date().toISOString(),
+      question.yr || null,
+      question.hint || null,
+      question.exp || null,
+      question.fun || null,
+    )
+    .run();
 }
 
 async function deleteCustomQuizQuestion(env: Env, id: number): Promise<void> {
-  memoryCustomQuestions.delete(id);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.delete(`quiz_custom:${id}`);
-  }
+  await env.DB.prepare(
+    "DELETE FROM quiz_questions WHERE id = ? AND slug = ?",
+  )
+    .bind(id, DEFAULT_SLUG)
+    .run();
 }
 
 async function getAllQuestions(env: Env): Promise<QuizQuestion[]> {
@@ -75,52 +98,91 @@ async function getAllQuestions(env: Env): Promise<QuizQuestion[]> {
   return [...quizQuestions, ...custom].sort((a, b) => a.id - b.id);
 }
 
-// ── Quiz stats persistence ──────────────────────────────────────
+// ── Quiz stats (computed from D1) ───────────────────────────────
 
 export async function loadQuizSummary(env: Env): Promise<QuizSummary> {
-  if (!env.QUIZ_DATA) return getMemoryQuizSummary();
-  const raw = await env.QUIZ_DATA.get("quiz_stats:summary");
-  if (!raw) return getMemoryQuizSummary();
-  try {
-    const parsed = parseQuizSummary(JSON.parse(raw));
-    return parsed ?? getMemoryQuizSummary();
-  } catch {
-    return getMemoryQuizSummary();
-  }
-}
+  const result = await env.DB.prepare(
+    `SELECT question_id, choice, COUNT(*) as cnt, SUM(correct) as correct_cnt
+     FROM quiz_answers WHERE slug = ?
+     GROUP BY question_id, choice
+     ORDER BY question_id, choice`,
+  )
+    .bind(DEFAULT_SLUG)
+    .all();
 
-async function saveQuizSummary(env: Env, summary: QuizSummary): Promise<void> {
-  setMemoryQuizSummary(summary);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put("quiz_stats:summary", JSON.stringify(summary));
+  let totalAnswers = 0;
+  let totalCorrect = 0;
+  const questionStats: Record<
+    string,
+    { total: number; correct: number; optionCounts: number[] }
+  > = {};
+
+  for (const row of result.results ?? []) {
+    const qid = String(row.question_id);
+    const choice = row.choice as number;
+    const cnt = row.cnt as number;
+    const correctCnt = row.correct_cnt as number;
+
+    if (!questionStats[qid]) {
+      questionStats[qid] = { total: 0, correct: 0, optionCounts: [] };
+    }
+    questionStats[qid].total += cnt;
+    questionStats[qid].correct += correctCnt;
+    while (questionStats[qid].optionCounts.length <= choice) {
+      questionStats[qid].optionCounts.push(0);
+    }
+    questionStats[qid].optionCounts[choice] = cnt;
+    totalAnswers += cnt;
+    totalCorrect += correctCnt;
   }
+
+  return { totalAnswers, totalCorrect, questionStats };
 }
 
 export async function loadRecentAnswers(
   env: Env,
 ): Promise<QuizRecentAnswer[]> {
-  if (!env.QUIZ_DATA) return getMemoryRecentAnswers();
-  const raw = await env.QUIZ_DATA.get("quiz_stats:recent_answers");
-  if (!raw) return getMemoryRecentAnswers();
-  try {
-    const parsed = parseRecentAnswers(JSON.parse(raw));
-    return parsed ?? getMemoryRecentAnswers();
-  } catch {
-    return getMemoryRecentAnswers();
-  }
+  const result = await env.DB.prepare(
+    `SELECT player_id, player_name, question_id, choice, correct, created_at
+     FROM quiz_answers WHERE slug = ?
+     ORDER BY created_at DESC LIMIT 60`,
+  )
+    .bind(DEFAULT_SLUG)
+    .all();
+
+  return (result.results ?? []).map((row) => ({
+    ts: row.created_at as string,
+    questionId: row.question_id as number,
+    choice: row.choice as number,
+    correct: Boolean(row.correct),
+    playerId: row.player_id as string,
+    playerName: row.player_name as string,
+  }));
 }
 
-async function saveRecentAnswers(
+async function recordQuizAnswer(
   env: Env,
-  answers: QuizRecentAnswer[],
+  question: QuizQuestion,
+  choice: number,
+  correct: boolean,
+  playerId: string,
+  playerName: string,
 ): Promise<void> {
-  setMemoryRecentAnswers(answers);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(
-      "quiz_stats:recent_answers",
-      JSON.stringify(answers),
-    );
-  }
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO quiz_answers (slug, player_id, player_name, question_id, choice, correct, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      DEFAULT_SLUG,
+      playerId,
+      playerName,
+      question.id,
+      choice,
+      correct ? 1 : 0,
+      now,
+    )
+    .run();
 }
 
 // ── Gamification helpers ────────────────────────────────────────
@@ -132,40 +194,43 @@ async function loadPlayerStats(
   env: Env,
   playerId: string,
 ): Promise<PlayerStats> {
-  const cached = memoryPlayerStats.get(playerId);
-  if (cached) return cached;
-  if (env.QUIZ_DATA) {
-    const raw = await env.QUIZ_DATA.get(`quiz_player:${playerId}`);
-    if (raw) {
-      try {
-        const stats = JSON.parse(raw) as PlayerStats;
-        memoryPlayerStats.set(playerId, stats);
-        return stats;
-      } catch {
-        /* fall through */
-      }
-    }
+  const row = await env.DB.prepare(
+    "SELECT * FROM player_stats WHERE player_id = ? AND slug = ?",
+  )
+    .bind(playerId, DEFAULT_SLUG)
+    .first();
+  if (!row) {
+    return {
+      playerId,
+      playerName: "Guest",
+      totalPoints: 0,
+      currentStreak: 0,
+      bestStreak: 0,
+      totalAnswers: 0,
+      totalCorrect: 0,
+      lastAnswerDate: null,
+    };
   }
-  return {
-    playerId,
-    playerName: "Guest",
-    totalPoints: 0,
-    currentStreak: 0,
-    bestStreak: 0,
-    totalAnswers: 0,
-    totalCorrect: 0,
-    lastAnswerDate: null,
-  };
+  return rowToPlayerStats(row as Record<string, unknown>);
 }
 
 async function savePlayerStats(env: Env, stats: PlayerStats): Promise<void> {
-  memoryPlayerStats.set(stats.playerId, stats);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(
-      `quiz_player:${stats.playerId}`,
-      JSON.stringify(stats),
-    );
-  }
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO player_stats (player_id, slug, player_name, total_points, current_streak, best_streak, total_answers, total_correct, last_answer_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      stats.playerId,
+      DEFAULT_SLUG,
+      stats.playerName,
+      stats.totalPoints,
+      stats.currentStreak,
+      stats.bestStreak,
+      stats.totalAnswers,
+      stats.totalCorrect,
+      stats.lastAnswerDate,
+    )
+    .run();
 }
 
 function updatePlayerStreak(stats: PlayerStats): { streakReset: boolean } {
@@ -207,63 +272,12 @@ function calculatePointsEarned(
 }
 
 async function loadLeaderboard(env: Env): Promise<PlayerStats[]> {
-  const players: PlayerStats[] = [];
-  if (env.QUIZ_DATA) {
-    const listed = await env.QUIZ_DATA.list({ prefix: "quiz_player:" });
-    const records = await Promise.all(
-      listed.keys.map(async (key) => {
-        const raw = await env.QUIZ_DATA!.get(key.name);
-        if (!raw) return null;
-        try {
-          return JSON.parse(raw) as PlayerStats;
-        } catch {
-          return null;
-        }
-      }),
-    );
-    players.push(...(records.filter(Boolean) as PlayerStats[]));
-  } else {
-    players.push(...memoryPlayerStats.values());
-  }
-  return players.sort((a, b) => b.totalPoints - a.totalPoints).slice(0, 50);
-}
-
-// ── Record answer helper ────────────────────────────────────────
-
-async function recordQuizAnswer(
-  env: Env,
-  question: QuizQuestion,
-  choice: number,
-  correct: boolean,
-  playerId: string,
-  playerName: string,
-): Promise<void> {
-  const summary = await loadQuizSummary(env);
-  const key = String(question.id);
-  const current = summary.questionStats[key] ?? {
-    total: 0,
-    correct: 0,
-    optionCounts: Array.from({ length: question.opts.length }).map(() => 0),
-  };
-  current.total += 1;
-  if (correct) current.correct += 1;
-  if (choice >= 0 && choice < current.optionCounts.length)
-    current.optionCounts[choice] += 1;
-  summary.questionStats[key] = current;
-  summary.totalAnswers += 1;
-  if (correct) summary.totalCorrect += 1;
-  await saveQuizSummary(env, summary);
-
-  const recent = await loadRecentAnswers(env);
-  recent.unshift({
-    ts: new Date().toISOString(),
-    questionId: question.id,
-    choice,
-    correct,
-    playerId,
-    playerName,
-  });
-  await saveRecentAnswers(env, recent.slice(0, 60));
+  const result = await env.DB.prepare(
+    "SELECT * FROM player_stats WHERE slug = ? ORDER BY total_points DESC LIMIT 50",
+  )
+    .bind(DEFAULT_SLUG)
+    .all();
+  return (result.results ?? []).map(rowToPlayerStats);
 }
 
 // ── Route handler ───────────────────────────────────────────────

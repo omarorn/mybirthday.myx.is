@@ -5,6 +5,7 @@
 
 // @ts-expect-error Wrangler bundles HTML imports
 import HTML from "./index.html";
+import karaokeModuleSource from "./karaoke-module-source";
 
 import type { Env } from "./types";
 import { HttpError } from "./types";
@@ -50,7 +51,7 @@ export default {
       const slug = getSlugFromPath(url.pathname);
       const html = HTML.replace(
         "</head>",
-        `<script>window.__APP_SLUG__=${JSON.stringify(slug || "")};</script></head>`,
+        `<script>${karaokeModuleSource}</script><script>window.__APP_SLUG__=${JSON.stringify(slug || "")};</script></head>`,
       );
 
       return new Response(html, {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import worker from "../../modules/mobile-app-shell/worker";
+import type { Env } from "../../modules/mobile-app-shell/types";
 
 const jsonHeaders = { "content-type": "application/json" };
 
@@ -10,6 +11,7 @@ function unique(label: string): string {
 // Lightweight in-memory D1 mock for unit tests
 function createMockDB() {
   const tables: Record<string, Record<string, unknown>[]> = {};
+  type RunnableStatement = { run: () => Promise<unknown> };
   function getTable(name: string) {
     if (!tables[name]) tables[name] = [];
     return tables[name];
@@ -54,8 +56,8 @@ function createMockDB() {
       };
       return stmt;
     },
-    batch(stmts: any[]) {
-      return Promise.all(stmts.map((s: any) => s.run()));
+    batch(stmts: RunnableStatement[]) {
+      return Promise.all(stmts.map((s) => s.run()));
     },
   };
 }
@@ -83,7 +85,11 @@ function createMockR2() {
   };
 }
 
-const mockEnv = { DB: createMockDB(), MEDIA_BUCKET: createMockR2(), ADMIN_PASSWORD: "changeme" } as any;
+const mockEnv = {
+  DB: createMockDB(),
+  MEDIA_BUCKET: createMockR2(),
+  ADMIN_PASSWORD: "changeme",
+} as unknown as Env;
 
 async function postJson(
   path: string,

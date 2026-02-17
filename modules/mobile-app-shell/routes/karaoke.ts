@@ -245,7 +245,7 @@ export async function handleKaraokeRoutes(
         String.fromCharCode(...new Uint8Array(audioBytes)),
       );
 
-      const result = (await (env.AI as any).run("@cf/openai/whisper-large-v3-turbo", {
+      const result = (await env.AI.run("@cf/openai/whisper-large-v3-turbo", {
         audio: audioB64,
         initial_prompt: "Icelandic birthday song karaoke lyrics and party speech.",
         prefix: `${song.title}${song.artist ? ` by ${song.artist}` : ""}`,

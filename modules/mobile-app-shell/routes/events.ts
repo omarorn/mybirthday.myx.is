@@ -1,5 +1,5 @@
 /**
- * Event CRUD route handlers and persistence.
+ * Event CRUD route handlers — D1 persistence.
  */
 
 import type { Env, EventRecord } from "../types";
@@ -10,90 +10,87 @@ import {
   slugify,
   isJsonObject,
   isAdmin,
-  parseEventRecord,
 } from "../helpers";
-import {
-  memoryEvents,
-  memoryEventSlugIndex,
-  memoryOwnerEventIds,
-} from "../state";
 
-// ── Persistence ─────────────────────────────────────────────────
+// ── Row mapping ─────────────────────────────────────────────────
+
+function rowToEvent(row: Record<string, unknown>): EventRecord {
+  return {
+    id: row.id as string,
+    ownerId: row.owner_id as string,
+    slug: row.slug as string,
+    title: row.title as string,
+    description: (row.description as string) || "",
+    startTime: row.start_time as string,
+    endTime: (row.end_time as string) || "",
+    timezone: (row.timezone as string) || "",
+    published: Boolean(row.published),
+    metadata: row.metadata
+      ? (JSON.parse(row.metadata as string) as Record<string, string>)
+      : {},
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+// ── Persistence (D1) ────────────────────────────────────────────
 
 function resolveOwnerId(request: Request): string {
   return (request.headers.get("x-owner-id") || "").trim();
-}
-
-async function loadOwnerEventIds(
-  env: Env,
-  ownerId: string,
-): Promise<string[]> {
-  if (!env.QUIZ_DATA) return memoryOwnerEventIds.get(ownerId) ?? [];
-  const raw = await env.QUIZ_DATA.get(`event:owner:${ownerId}`);
-  if (!raw) return [];
-  try {
-    const ids = JSON.parse(raw) as string[];
-    return Array.isArray(ids) ? ids : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveOwnerEventIds(
-  env: Env,
-  ownerId: string,
-  ids: string[],
-): Promise<void> {
-  memoryOwnerEventIds.set(ownerId, ids);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(`event:owner:${ownerId}`, JSON.stringify(ids));
-  }
-}
-
-async function registerOwnerEventId(
-  env: Env,
-  ownerId: string,
-  eventId: string,
-): Promise<void> {
-  const current = await loadOwnerEventIds(env, ownerId);
-  const next = [eventId, ...current.filter((x) => x !== eventId)].slice(0, 80);
-  await saveOwnerEventIds(env, ownerId, next);
 }
 
 async function loadEventById(
   env: Env,
   id: string,
 ): Promise<EventRecord | null> {
-  if (!env.QUIZ_DATA) return memoryEvents.get(id) ?? null;
-  const raw = await env.QUIZ_DATA.get(`event:id:${id}`);
-  if (!raw) return null;
-  try {
-    return parseEventRecord(JSON.parse(raw));
-  } catch {
-    return null;
-  }
+  const row = await env.DB.prepare("SELECT * FROM events WHERE id = ?")
+    .bind(id)
+    .first();
+  return row ? rowToEvent(row as Record<string, unknown>) : null;
 }
 
 async function loadEventBySlug(
   env: Env,
   slug: string,
 ): Promise<EventRecord | null> {
-  if (!env.QUIZ_DATA) {
-    const eventId = memoryEventSlugIndex.get(slug);
-    return eventId ? (memoryEvents.get(eventId) ?? null) : null;
-  }
-  const eventId = await env.QUIZ_DATA.get(`event:slug:${slug}`);
-  if (!eventId) return null;
-  return loadEventById(env, eventId);
+  const row = await env.DB.prepare("SELECT * FROM events WHERE slug = ?")
+    .bind(slug)
+    .first();
+  return row ? rowToEvent(row as Record<string, unknown>) : null;
+}
+
+async function loadOwnerEvents(
+  env: Env,
+  ownerId: string,
+): Promise<EventRecord[]> {
+  const result = await env.DB.prepare(
+    "SELECT * FROM events WHERE owner_id = ? ORDER BY updated_at DESC LIMIT 80",
+  )
+    .bind(ownerId)
+    .all();
+  return (result.results ?? []).map(rowToEvent);
 }
 
 async function saveEvent(env: Env, event: EventRecord): Promise<void> {
-  memoryEvents.set(event.id, event);
-  memoryEventSlugIndex.set(event.slug, event.id);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(`event:id:${event.id}`, JSON.stringify(event));
-    await env.QUIZ_DATA.put(`event:slug:${event.slug}`, event.id);
-  }
+  await env.DB.prepare(
+    `INSERT INTO events (id, owner_id, slug, title, description, start_time, end_time, timezone, published, metadata, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      event.id,
+      event.ownerId,
+      event.slug,
+      event.title,
+      event.description || "",
+      event.startTime,
+      event.endTime || "",
+      event.timezone || "",
+      event.published ? 1 : 0,
+      event.metadata ? JSON.stringify(event.metadata) : "{}",
+      event.createdAt,
+      event.updatedAt,
+    )
+    .run();
 }
 
 function buildEventRecord(
@@ -246,7 +243,6 @@ export async function handleEventsRoutes(
       );
 
     await saveEvent(env, event);
-    await registerOwnerEventId(env, ownerId, event.id);
 
     return json({ success: true, eventId: event.id, event }, 201);
   }
@@ -352,10 +348,10 @@ export async function handleEventsRoutes(
     }
 
     await saveEvent(env, clone);
-    await registerOwnerEventId(env, effectiveOwnerId, clone.id);
 
+    // Copy optional KV metadata keys (links, schedule, etc.)
+    const copiedKeys: string[] = [];
     if (env.QUIZ_DATA) {
-      const copiedKeys: string[] = [];
       for (const suffixToCopy of [
         "links",
         "schedule",
@@ -375,16 +371,6 @@ export async function handleEventsRoutes(
           copiedKeys.push(suffixToCopy);
         }
       }
-      return json(
-        {
-          success: true,
-          sourceEventId: sourceEvent.id,
-          eventId: clone.id,
-          event: clone,
-          copiedKeys,
-        },
-        201,
-      );
     }
 
     return json(
@@ -393,7 +379,7 @@ export async function handleEventsRoutes(
         sourceEventId: sourceEvent.id,
         eventId: clone.id,
         event: clone,
-        copiedKeys: [],
+        copiedKeys,
       },
       201,
     );
@@ -403,13 +389,7 @@ export async function handleEventsRoutes(
     const ownerId = resolveOwnerId(request);
     if (!ownerId) return json({ error: "Aðgangur ekki leyfður" }, 401);
 
-    const ids = await loadOwnerEventIds(env, ownerId);
-    const loaded = await Promise.all(
-      ids.map(async (id) => loadEventById(env, id)),
-    );
-    const events = loaded
-      .filter((event): event is EventRecord => Boolean(event))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const events = await loadOwnerEvents(env, ownerId);
     const drafts = events.filter((event) => !event.published);
     const published = events.filter((event) => event.published);
 

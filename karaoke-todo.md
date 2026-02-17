@@ -16,9 +16,8 @@ Scope: `mybirthday.myx.is` karaoke hardening + realtime upgrade + parity rollout
   - `POST /api/karaoke/lyrics`
   - `DELETE /api/karaoke/song`
 - Storage model:
-  - Song metadata in KV (`karaoke:songs:{slug}`)
-  - Audio blobs in KV (`karaoke:audio:{slug}:{id}`)
-  - Memory maps used when KV missing
+  - Song metadata in D1 (`karaoke_songs`)
+  - Audio blobs in R2 (`MEDIA_BUCKET`)
 - AI model currently used for transcription in our code: `@cf/openai/whisper-large-v3-turbo`
 - Preset song support added (`Hann á afmæli í dag`) with lyrics + chords + `preset` guard.
 
@@ -77,8 +76,8 @@ Scope: `mybirthday.myx.is` karaoke hardening + realtime upgrade + parity rollout
 ## 4. Execution Plan
 
 ## Phase A: Stabilize and Refactor (1-2 days)
-- [ ] Extract karaoke frontend logic from `index.html` into a dedicated module file.
-- [ ] Keep UI selectors stable, but isolate transport/storage logic from rendering logic.
+- [x] Extract karaoke frontend logic from `index.html` into a dedicated module file.
+- [x] Keep UI selectors stable, but isolate transport/storage logic from rendering logic.
 - [ ] Add strict response shape guards on all karaoke fetch calls.
 - [ ] Add server-side validation for `title`, `addedBy`, `audioBase64`, and `lyrics` payload lengths.
 - [ ] Ensure preset songs are never persisted redundantly and cannot be deleted.
@@ -157,15 +156,15 @@ Acceptance:
 ## 5. Test Plan
 
 ### Unit
-- [ ] `routes/karaoke.ts` request validation tests.
-- [ ] Preset merge behavior tests.
-- [ ] Transcribe success/fail transitions.
-- [ ] Delete constraints (preset cannot be deleted).
+- [x] `routes/karaoke.ts` request validation tests.
+- [x] Preset merge behavior tests.
+- [x] Transcribe success/fail transitions.
+- [x] Delete constraints (preset cannot be deleted).
 
 ### Integration
-- [ ] Upload + transcribe + lyrics update roundtrip.
-- [ ] Audio fetch fallback paths.
-- [ ] Song list includes `hasAudio` correctness.
+- [x] Upload + transcribe + lyrics update roundtrip.
+- [x] Audio fetch fallback paths.
+- [x] Song list includes `hasAudio` correctness.
 
 ### E2E
 - [ ] UI upload and play flow.
@@ -176,10 +175,10 @@ Acceptance:
 
 ## 6. Deployment Checklist
 
-- [ ] `npm run typecheck`
-- [ ] `npm run lint`
-- [ ] `npm run test`
-- [ ] `npm run build`
+- [x] `npm run typecheck`
+- [x] `npm run lint`
+- [x] `npm run test`
+- [x] `npm run build`
 - [ ] `npm run deploy`
 - [ ] Post-deploy smoke test on custom domain
 - [ ] Update `TODO.md` and release notes
@@ -188,6 +187,7 @@ Acceptance:
 
 ## 7. Immediate Next 3 Tasks
 
-- [ ] Add karaoke unit tests under `tests/unit` for current backend route behavior.
-- [ ] Wire VTT to frontend `<audio><track>` path and ensure highlight sync prefers VTT timings when present.
+- [x] Extracted `initKaraokeModule` from `index.html` into separate source file (`modules/mobile-app-shell/karaoke-module-source.ts`) and inject via worker.
+- [x] Add karaoke unit tests under `tests/unit` for current backend route behavior.
+- [x] Wire VTT to frontend `<audio><track>` path and ensure highlight sync prefers VTT timings when present.
 - [ ] Start migration path for new uploads to R2 while preserving read compatibility for existing KV-base64 songs.

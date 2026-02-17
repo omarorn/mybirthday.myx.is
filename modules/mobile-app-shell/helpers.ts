@@ -6,9 +6,6 @@ import type {
   Env,
   JsonObject,
   QuizQuestion,
-  QuizSummary,
-  QuizRecentAnswer,
-  EventRecord,
 } from "./types";
 import { HttpError } from "./types";
 
@@ -89,107 +86,6 @@ export function isValidHttpUrl(value: string): boolean {
 
 export function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
-}
-
-export function parseQuizSummary(value: unknown): QuizSummary | null {
-  if (!isJsonObject(value)) return null;
-  if (
-    !isFiniteNumber(value.totalAnswers) ||
-    !isFiniteNumber(value.totalCorrect)
-  ) {
-    return null;
-  }
-  if (!isJsonObject(value.questionStats)) return null;
-  const questionStats: QuizSummary["questionStats"] = {};
-  for (const [id, stat] of Object.entries(value.questionStats)) {
-    if (!isJsonObject(stat)) continue;
-    if (!isFiniteNumber(stat.total) || !isFiniteNumber(stat.correct)) continue;
-    if (!Array.isArray(stat.optionCounts)) continue;
-    const optionCounts = stat.optionCounts.filter(isFiniteNumber);
-    questionStats[id] = {
-      total: stat.total,
-      correct: stat.correct,
-      optionCounts,
-    };
-  }
-  return {
-    totalAnswers: value.totalAnswers,
-    totalCorrect: value.totalCorrect,
-    questionStats,
-  };
-}
-
-export function parseRecentAnswers(
-  value: unknown,
-): QuizRecentAnswer[] | null {
-  if (!Array.isArray(value)) return null;
-  const parsed: QuizRecentAnswer[] = [];
-  for (const item of value) {
-    if (!isJsonObject(item)) continue;
-    if (!isFiniteNumber(item.questionId) || !isFiniteNumber(item.choice))
-      continue;
-    if (typeof item.ts !== "string" || typeof item.playerId !== "string")
-      continue;
-    if (
-      typeof item.playerName !== "string" ||
-      typeof item.correct !== "boolean"
-    )
-      continue;
-    parsed.push({
-      ts: item.ts,
-      questionId: item.questionId,
-      choice: item.choice,
-      correct: item.correct,
-      playerId: item.playerId,
-      playerName: item.playerName,
-    });
-  }
-  return parsed;
-}
-
-export function parseEventRecord(value: unknown): EventRecord | null {
-  if (!isJsonObject(value)) return null;
-  if (
-    typeof value.id !== "string" ||
-    typeof value.ownerId !== "string" ||
-    typeof value.slug !== "string" ||
-    typeof value.title !== "string" ||
-    typeof value.startTime !== "string" ||
-    typeof value.published !== "boolean" ||
-    typeof value.createdAt !== "string" ||
-    typeof value.updatedAt !== "string"
-  ) {
-    return null;
-  }
-  if (value.description !== undefined && typeof value.description !== "string")
-    return null;
-  if (value.endTime !== undefined && typeof value.endTime !== "string")
-    return null;
-  if (value.timezone !== undefined && typeof value.timezone !== "string")
-    return null;
-  if (value.metadata !== undefined && !isJsonObject(value.metadata))
-    return null;
-  let metadata: Record<string, string> | undefined;
-  if (value.metadata !== undefined) {
-    metadata = {};
-    for (const [key, entryValue] of Object.entries(value.metadata)) {
-      if (typeof entryValue === "string") metadata[key] = entryValue;
-    }
-  }
-  return {
-    id: value.id,
-    ownerId: value.ownerId,
-    slug: value.slug,
-    title: value.title,
-    description: value.description,
-    startTime: value.startTime,
-    endTime: value.endTime,
-    timezone: value.timezone,
-    published: value.published,
-    metadata,
-    createdAt: value.createdAt,
-    updatedAt: value.updatedAt,
-  };
 }
 
 export function normalizeId(method: string, contact: string): string {
