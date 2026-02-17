@@ -490,5 +490,165 @@ export const quizQuestions: QuizQuestion[] = [
     "ans": 2,
     "exp": "40 bjórar á fjórum dögum og 3000 km! Labbaði yfir allar brýr Dónár.",
     "fun": "Gleymdi alveg myndunum. \"Við bara þar.\""
+  },
+  {
+    "id": 31,
+    "yr": 1976,
+    "cat": "🎂 Fæðingardagur",
+    "q": "Hvaða dag í júní 1976 fæddist Ómar?",
+    "hint": "Sólstöður eru nálægt. Ómar var fæddur á miðjum sumri — rétt áður en dagarnir fara að styttast.",
+    "opts": [
+      "15. júní",
+      "17. júní",
+      "19. júní",
+      "21. júní"
+    ],
+    "ans": 2,
+    "exp": "19. júní 1976 — sumarið var í hámarki og nýr version spilari kom í heiminn.",
+    "fun": "v1.0 release date: 19.06.1976. Enginn CHANGELOG, engir release notes."
+  },
+  {
+    "id": 32,
+    "yr": 2026,
+    "cat": "🎉 50 ára",
+    "q": "Hvaða version number verður Ómar á 50 ára afmælinu?",
+    "hint": "Bók Lífsins mælir lífið í version-um — hvert ár er major update. Fæðingin var v1.0.",
+    "opts": [
+      "v49.0",
+      "v50.0",
+      "v51.0",
+      "v50.6.19"
+    ],
+    "ans": 1,
+    "exp": "v50.0 — Half-century release! Stærsta update í 50 ár.",
+    "fun": "Engin beta-prófun — beint í production á afmælisdaginn."
+  },
+  {
+    "id": 33,
+    "yr": 1986,
+    "cat": "🏫 Tíu ára",
+    "q": "Á tíu ára afmæli Ómars (1986) — hvað var vinsælast í Sjónvarpinu?",
+    "hint": "Íslensku sjónvarpsþættirnir voru bara á RÚV og þeir sýndu amerískan efni á miðvikudögum. Á 80s var eitt barnasýn sem allir ungar strákur elskuðu.",
+    "opts": [
+      "MacGyver",
+      "Knight Rider",
+      "A-Team",
+      "Magnum P.I."
+    ],
+    "ans": 1,
+    "exp": "Knight Rider var nr. 1 — KITT talaði, og Ómar dreymdi um bíl sem keyrði sjálfan sig.",
+    "fun": "30 árum seinna er Tesla-bíllinn hans dottið í knight-mode."
+  },
+  {
+    "id": 34,
+    "yr": 1996,
+    "cat": "💻 Tuttugu",
+    "q": "Hvað gerðist í tölvuheiminum 1996 þegar Ómar varð 20 ára?",
+    "hint": "Internetið var ný fyrirbæri. Einn ákveðinn vefskoðari breytti öllu — og hann byrjaði með 'N'.",
+    "opts": [
+      "Netscape Navigator 3.0 kom út",
+      "Google var stofnað",
+      "Windows XP kom út",
+      "iPhone var kynnt"
+    ],
+    "ans": 0,
+    "exp": "Netscape Navigator 3.0 — internetið var nýtt og Ómar var nú þegar að kóða vefsíður.",
+    "fun": "v20.0 — System update: Internet module installed. Life.exe changed forever."
+  },
+  {
+    "id": 35,
+    "yr": 2006,
+    "cat": "🏗️ Þrítugur",
+    "q": "Hvað gerði Ómar á þrítugu?",
+    "hint": "Á þessum aldri var Ómar búinn að ná sér á strik í tæknigeiranum. Hann var ekki bara notandi — hann var skapari.",
+    "opts": [
+      "Hætti í vinnu og ferðaðist",
+      "Stofnaði tæknifyrirtæki",
+      "Flutti til Noregs",
+      "Byrjaði í meistaranámi"
+    ],
+    "ans": 1,
+    "exp": "v30.0 — Ómar stofnaði tæknifyrirtæki og byrjaði að byggja sinn eigin heiminn.",
+    "fun": "Entrepreneur mode: activated. Sleep mode: deprecated."
+  },
+  {
+    "id": 36,
+    "yr": 2016,
+    "cat": "🎯 Fertugt",
+    "q": "Hvaða áfanga náði Ómar á fertugsafmælinu?",
+    "hint": "Á þessum tímapunkti var Ómar kominn með mikla reynslu — bæði sem forritari og sem manneskja. Eitthvað nýtt var að vaxa.",
+    "opts": [
+      "Keypti fyrsta Tesla-bílinn",
+      "Byrjaði að skrifa Bók Lífsins",
+      "Fékk fyrsta barnið",
+      "Flutti í nýtt hús"
+    ],
+    "ans": 1,
+    "exp": "Bók Lífsins — verkefnið sem breytti öllu. Ómar fór að skrá söguna sína.",
+    "fun": "v40.0 — New feature: Memory persistence. Life changelog initiated."
+  },
+  {
+    "id": 37,
+    "yr": 2026,
+    "cat": "🥳 Veisla",
+    "q": "Hvert er þema fimmtugsafmælisveislunnar?",
+    "hint": "Veislan blandar saman nokkrum kvikmyndaþemum. Hugsa um dularfullt, glæsilegt, og dálítið retro vibes.",
+    "opts": [
+      "Víkingaþema",
+      "James Bond / Death Becomes Her / Pink Panther",
+      "Star Wars þema",
+      "Hawaiian Luau"
+    ],
+    "ans": 1,
+    "exp": "Bond + Death Becomes Her + Pink Panther + 80s Retro — fjögur themes í einu!",
+    "fun": "Dress code: Anything from tux to neon. Bara enginn casual jeans."
+  },
+  {
+    "id": 38,
+    "yr": 2026,
+    "cat": "⏰ Countdown",
+    "q": "Hversu margir dagar eru til afmælisveislunnar 19. júní 2026?",
+    "hint": "Dagsetningin er 19. júní 2026. Reiknaðu frá deginum í dag... eða giskaðu!",
+    "opts": [
+      "Um 90 dagar",
+      "Um 123 dagar",
+      "Um 150 dagar",
+      "Um 180 dagar"
+    ],
+    "ans": 1,
+    "exp": "Um 123 dagar — niðurtalningin er hafin! Hvert sekúnda telst.",
+    "fun": "Countdown.exe running. Excitement level: increasing exponentially."
+  },
+  {
+    "id": 39,
+    "yr": 1976,
+    "cat": "🏥 Fæðing",
+    "q": "Hversu þungur var Ómar nýfæddur?",
+    "hint": "Pabbi sagði 'meðalstóran þorsk' — en í raunveruleikanum var Ómar ekki of stór né of lítill.",
+    "opts": [
+      "3.2 kg",
+      "3.8 kg",
+      "4.2 kg",
+      "5.0 kg"
+    ],
+    "ans": 2,
+    "exp": "5 kíló og 54 cm — ekki 'meðalstór þorskur' heldur frekar stór lúða!",
+    "fun": "Deployment weight: 5kg. Initial load time: 9 months. First boot: successful."
+  },
+  {
+    "id": 40,
+    "yr": 2026,
+    "cat": "🎵 Tónlist",
+    "q": "Hvaða hljóðfæri spilar Ómar EKKI?",
+    "hint": "Ómar er fjölhæfur — en eitt af þessu hefur hann aldrei snert.",
+    "opts": [
+      "Gítara",
+      "Harpa",
+      "Píanó",
+      "Trommur"
+    ],
+    "ans": 1,
+    "exp": "Harpa! Ómar spilar á marga hluti en íslensku þjóðhljóðfærið hefur hann aldrei próbað.",
+    "fun": "Bug report: Harp module not found in v50.0. Feature request submitted."
   }
 ];

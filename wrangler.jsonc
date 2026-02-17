@@ -1,12 +1,24 @@
 {
   "name": "mybirthday-myx-is",
-  "main": "./src/index.ts",
+  "main": "./modules/mobile-app-shell/worker.ts",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "routes": [
-    "mybirthday.myx.is/*"
+    { "pattern": "mybirthday.myx.is", "custom_domain": true }
   ],
+  "rules": [
+    { "type": "Text", "globs": ["**/*.html"], "fallthrough": true }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "QUIZ_DATA",
+      "id": "3ab11a174e29413484c758a94ba60faa"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
   "vars": {
     "APP_NAME": "MYX.IS",
     "PORTAL": "mybirthday"

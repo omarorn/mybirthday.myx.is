@@ -8,5 +8,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "modules/mobile-app-shell/**/*.ts"],
+  "exclude": ["node_modules"]
 }

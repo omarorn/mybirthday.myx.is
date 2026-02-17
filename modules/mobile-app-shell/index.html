@@ -416,7 +416,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   border-radius: 999px;
   padding: 0.38rem;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 0.2rem;
   z-index: 25;
   backdrop-filter: blur(14px);
@@ -471,6 +471,46 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .nav-chip .label {
   line-height: 1;
 }
+/* MySelfie */
+.selfie-camera { position: relative; border-radius: 1rem; overflow: hidden; background: #000; aspect-ratio: 4/3; }
+.selfie-camera video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.selfie-camera canvas { display: none; }
+.selfie-countdown { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: 800; color: #fff; background: rgba(0,0,0,0.4); z-index: 2; display: none; }
+.selfie-controls { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.selfie-controls .btn { flex: 1; min-width: 0; }
+.selfie-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.75rem; }
+.selfie-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 0.5rem; cursor: pointer; transition: transform 0.15s; }
+.selfie-gallery img:active { transform: scale(0.96); }
+.selfie-lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; flex-direction: column; padding: 1rem; }
+.selfie-lightbox.open { display: flex; }
+.selfie-lightbox img { max-width: 95%; max-height: 75vh; border-radius: 0.75rem; }
+.selfie-lightbox .caption { color: #fff; margin-top: 0.5rem; font-size: 0.9rem; }
+.selfie-lightbox .close-lb { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); border: none; color: #fff; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; }
+/* MyKaraoke */
+.karaoke-upload { display: flex; flex-direction: column; gap: 0.5rem; }
+.karaoke-upload input[type="text"], .karaoke-upload textarea { padding: 0.55rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: var(--surface); color: var(--text-primary); font-size: 0.9rem; }
+.karaoke-song-list { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.karaoke-song-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.5rem; background: var(--surface); border: 1px solid var(--border-light); cursor: pointer; }
+.karaoke-song-item .song-info { flex: 1; }
+.karaoke-song-item .song-title { font-weight: 600; font-size: 0.9rem; }
+.karaoke-song-item .song-artist { font-size: 0.78rem; color: var(--text-secondary); }
+.karaoke-badge { display: inline-block; padding: 0.12rem 0.4rem; border-radius: 999px; font-size: 0.68rem; font-weight: 600; }
+.karaoke-badge.ready { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
+.karaoke-badge.transcribing { background: color-mix(in srgb, var(--amber) 20%, transparent); color: var(--amber); }
+.karaoke-badge.uploaded { background: color-mix(in srgb, var(--text-muted) 20%, transparent); color: var(--text-muted); }
+.karaoke-badge.error { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
+.karaoke-player { display: none; flex-direction: column; gap: 0.75rem; }
+.karaoke-player.active { display: flex; }
+.karaoke-lyrics { min-height: 120px; padding: 1rem; border-radius: 0.75rem; background: var(--surface); border: 1px solid var(--border-light); font-size: 1.4rem; line-height: 2; text-align: center; overflow-y: auto; max-height: 50vh; }
+.karaoke-lyrics .word { display: inline-block; margin: 0 0.1em; transition: all 0.15s; opacity: 0.4; }
+.karaoke-lyrics .word.active { opacity: 1; color: var(--accent); transform: scale(1.15); font-weight: 700; }
+.karaoke-lyrics .word.past { opacity: 0.7; }
+.karaoke-audio-controls { display: flex; align-items: center; gap: 0.5rem; }
+.karaoke-audio-controls input[type="range"] { flex: 1; accent-color: var(--accent); }
+.karaoke-fullscreen { position: fixed; inset: 0; z-index: 100; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+.karaoke-fullscreen.open { display: flex; }
+.karaoke-fullscreen .karaoke-lyrics { font-size: 2.2rem; background: transparent; border: none; color: #fff; max-height: 80vh; }
+.karaoke-fullscreen .close-fs { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); border: none; color: #fff; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -814,6 +854,84 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
     </div>
   </section>
 
+  <!-- MySelfie Section -->
+  <section id="sec-selfie" style="padding: 0 1rem 1rem;">
+    <div class="card" style="margin-bottom: 0.75rem;">
+      <div style="font-weight: 600; margin-bottom: 0.5rem;">Selfie-bás</div>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Taktu selfie með gestum — áður og eftir veisluna!</div>
+      <div class="selfie-camera" data-selfie-camera>
+        <video data-selfie-video autoplay playsinline muted></video>
+        <canvas data-selfie-canvas></canvas>
+        <div class="selfie-countdown" data-selfie-countdown></div>
+      </div>
+      <div class="selfie-controls">
+        <button class="btn" data-selfie-action="flip">Snúa</button>
+        <button class="btn primary" data-selfie-action="capture">Taktu mynd</button>
+      </div>
+      <div style="margin-top: 0.5rem; display: flex; gap: 0.4rem;">
+        <input type="text" data-selfie-name placeholder="Nafn þitt" style="flex: 1; padding: 0.45rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: var(--surface); color: var(--text-primary); font-size: 0.85rem;">
+        <input type="text" data-selfie-caption placeholder="Texti (valfrjálst)" style="flex: 1; padding: 0.45rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background: var(--surface); color: var(--text-primary); font-size: 0.85rem;">
+      </div>
+      <div data-selfie-status class="muted" style="margin-top: 0.4rem; font-size: 0.82rem;"></div>
+      <div class="selfie-gallery" data-selfie-gallery></div>
+    </div>
+    <div class="selfie-lightbox" data-selfie-lightbox>
+      <button class="close-lb" data-selfie-lightbox-close>&times;</button>
+      <img data-selfie-lightbox-img src="" alt="Selfie">
+      <div class="caption" data-selfie-lightbox-caption></div>
+      <a class="btn" style="margin-top: 0.5rem; color: #fff; text-decoration: none;" data-selfie-lightbox-download download="selfie.jpg">Sækja mynd</a>
+    </div>
+  </section>
+
+  <!-- MyKaraoke Section -->
+  <section id="sec-karaoke" style="padding: 0 1rem 1rem;">
+    <div class="card" style="margin-bottom: 0.75rem;">
+      <div style="font-weight: 600; margin-bottom: 0.5rem;">Karaoke</div>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Hladdu upp lagi, gervigreindin umritar textann og þú syngur karaoke!</div>
+      <div data-karaoke-view="upload">
+        <div class="karaoke-upload">
+          <input type="text" data-karaoke-title placeholder="Heiti lags">
+          <input type="text" data-karaoke-artist placeholder="Flytjandi (valfrjálst)">
+          <input type="text" data-karaoke-added-by placeholder="Nafn þitt">
+          <label class="btn" style="text-align: center; cursor: pointer;">
+            Veldu hljóðskrá (mp3, wav, ogg)
+            <input type="file" data-karaoke-file accept="audio/*" style="display: none;">
+          </label>
+          <textarea data-karaoke-manual-lyrics placeholder="Eða límdu lagatexta hér (valfrjálst)" rows="3" style="resize: vertical;"></textarea>
+          <button class="btn primary" data-karaoke-action="upload" disabled>Hlaða upp</button>
+        </div>
+        <div data-karaoke-status class="muted" style="margin-top: 0.4rem; font-size: 0.82rem;"></div>
+        <div class="karaoke-song-list" data-karaoke-song-list></div>
+      </div>
+      <div class="karaoke-player" data-karaoke-view="player">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 600;" data-karaoke-now-title></div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);" data-karaoke-now-artist></div>
+          </div>
+          <button class="btn" data-karaoke-action="back-to-list" style="font-size: 0.8rem;">Til baka</button>
+        </div>
+        <div class="karaoke-lyrics" data-karaoke-lyrics></div>
+        <div class="karaoke-audio-controls">
+          <button class="btn" data-karaoke-action="play" style="min-width: 44px;">&#9654;</button>
+          <input type="range" data-karaoke-seek min="0" max="100" value="0">
+          <span data-karaoke-time style="font-size: 0.78rem; min-width: 3em;">0:00</span>
+          <button class="btn" data-karaoke-action="fullscreen" style="min-width: 44px;">&#x26F6;</button>
+        </div>
+        <audio data-karaoke-audio preload="auto"></audio>
+      </div>
+    </div>
+    <div class="karaoke-fullscreen" data-karaoke-fullscreen>
+      <button class="close-fs" data-karaoke-fullscreen-close>&times;</button>
+      <div class="karaoke-lyrics" data-karaoke-fs-lyrics></div>
+      <div class="karaoke-audio-controls" style="position: absolute; bottom: 2rem; width: 80%;">
+        <button class="btn" data-karaoke-fs-play style="min-width: 44px; color: #fff;">&#9654;</button>
+        <input type="range" data-karaoke-fs-seek min="0" max="100" value="0">
+        <span data-karaoke-fs-time style="font-size: 0.78rem; color: #fff; min-width: 3em;">0:00</span>
+      </div>
+    </div>
+  </section>
+
   <footer class="safe-bottom" style="text-align: center; padding: 2rem 1rem; color: var(--text-muted); font-size: 0.8rem;">
     Afmæli mitt • Omar 50 • 19. júní 2026
   </footer>
@@ -839,6 +957,14 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
     <button class="nav-chip" data-jump="sec-photo" data-i18n="nav_photos">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m21 16-5-4-4 3-2-1.5L3 19"/></svg>
       <span class="label">Myndir</span>
+    </button>
+    <button class="nav-chip" data-jump="sec-selfie" data-i18n="nav_selfie">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M2 8h2"/><path d="M20 8h2"/></svg>
+      <span class="label">Selfie</span>
+    </button>
+    <button class="nav-chip" data-jump="sec-karaoke" data-i18n="nav_karaoke">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v11"/><circle cx="12" cy="12" r="3"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+      <span class="label">Karaoke</span>
     </button>
     <button class="nav-chip" data-jump="sec-host" data-i18n="nav_host">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.5"/><path d="M4 20c1.5-3 4.2-4.5 8-4.5s6.5 1.5 8 4.5"/></svg>
@@ -887,6 +1013,47 @@ function initInteractions(root) {
   const plannerSubmit = root.querySelector('[data-planner-submit]');
   const plannerStatus = root.querySelector('[data-planner-status]');
   const navFeedback = root.querySelector('[data-nav-feedback]');
+  // Selfie elements
+  const selfieVideo = root.querySelector('[data-selfie-video]');
+  const selfieCanvas = root.querySelector('[data-selfie-canvas]');
+  const selfieCountdown = root.querySelector('[data-selfie-countdown]');
+  const selfieCaptureBtn = root.querySelector('[data-selfie-action="capture"]');
+  const selfieFlipBtn = root.querySelector('[data-selfie-action="flip"]');
+  const selfieName = root.querySelector('[data-selfie-name]');
+  const selfieCaption = root.querySelector('[data-selfie-caption]');
+  const selfieStatus = root.querySelector('[data-selfie-status]');
+  const selfieGallery = root.querySelector('[data-selfie-gallery]');
+  const selfieLightbox = root.querySelector('[data-selfie-lightbox]');
+  const selfieLbImg = root.querySelector('[data-selfie-lightbox-img]');
+  const selfieLbCaption = root.querySelector('[data-selfie-lightbox-caption]');
+  const selfieLbDownload = root.querySelector('[data-selfie-lightbox-download]');
+  const selfieLbClose = root.querySelector('[data-selfie-lightbox-close]');
+  // Karaoke elements
+  const karaokeTitle = root.querySelector('[data-karaoke-title]');
+  const karaokeArtist = root.querySelector('[data-karaoke-artist]');
+  const karaokeAddedBy = root.querySelector('[data-karaoke-added-by]');
+  const karaokeFile = root.querySelector('[data-karaoke-file]');
+  const karaokeManualLyrics = root.querySelector('[data-karaoke-manual-lyrics]');
+  const karaokeUploadBtn = root.querySelector('[data-karaoke-action="upload"]');
+  const karaokeStatus = root.querySelector('[data-karaoke-status]');
+  const karaokeSongList = root.querySelector('[data-karaoke-song-list]');
+  const karaokeUploadView = root.querySelector('[data-karaoke-view="upload"]');
+  const karaokePlayerView = root.querySelector('[data-karaoke-view="player"]');
+  const karaokeLyrics = root.querySelector('[data-karaoke-lyrics]');
+  const karaokeAudio = root.querySelector('[data-karaoke-audio]');
+  const karaokeNowTitle = root.querySelector('[data-karaoke-now-title]');
+  const karaokeNowArtist = root.querySelector('[data-karaoke-now-artist]');
+  const karaokePlayBtn = root.querySelector('[data-karaoke-action="play"]');
+  const karaokeSeek = root.querySelector('[data-karaoke-seek]');
+  const karaokeTime = root.querySelector('[data-karaoke-time]');
+  const karaokeBackBtn = root.querySelector('[data-karaoke-action="back-to-list"]');
+  const karaokeFullscreenBtn = root.querySelector('[data-karaoke-action="fullscreen"]');
+  const karaokeFullscreen = root.querySelector('[data-karaoke-fullscreen]');
+  const karaokeFsClose = root.querySelector('[data-karaoke-fullscreen-close]');
+  const karaokeFsLyrics = root.querySelector('[data-karaoke-fs-lyrics]');
+  const karaokeFsPlay = root.querySelector('[data-karaoke-fs-play]');
+  const karaokeFsSeek = root.querySelector('[data-karaoke-fs-seek]');
+  const karaokeFsTime = root.querySelector('[data-karaoke-fs-time]');
   const currentSlug = (window.__APP_SLUG__ || location.pathname.split('/').filter(Boolean)[0] || 'omars50').toLowerCase();
   const giftStorageKey = `myx-gift-wishlist:${currentSlug}`;
 
@@ -1469,6 +1636,363 @@ function initInteractions(root) {
   if (adminRefreshBtn) adminRefreshBtn.addEventListener('click', refreshAdminOverview);
   if (eventLoopStartBtn) eventLoopStartBtn.addEventListener('click', startMyEventLoop);
   if (plannerSubmit) plannerSubmit.addEventListener('click', submitPlannerApplication);
+
+  // ── MySelfie ──────────────────────────────────────
+  let selfieStream = null;
+  let selfieFacingMode = 'user';
+
+  async function startSelfieCamera() {
+    if (!selfieVideo) return;
+    try {
+      if (selfieStream) selfieStream.getTracks().forEach(t => t.stop());
+      selfieStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: selfieFacingMode, width: { ideal: 1280 }, height: { ideal: 960 } },
+        audio: false
+      });
+      selfieVideo.srcObject = selfieStream;
+      if (selfieStatus) selfieStatus.textContent = '';
+    } catch (err) {
+      if (selfieStatus) selfieStatus.textContent = 'Myndavélin náðist ekki: ' + err.message;
+    }
+  }
+
+  if (selfieFlipBtn) selfieFlipBtn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    selfieFacingMode = selfieFacingMode === 'user' ? 'environment' : 'user';
+    selfieVideo.style.transform = selfieFacingMode === 'user' ? 'scaleX(-1)' : 'none';
+    startSelfieCamera();
+  });
+
+  if (selfieCaptureBtn) selfieCaptureBtn.addEventListener('click', async (ev) => {
+    ev.stopPropagation();
+    if (!selfieVideo || !selfieCanvas || !selfieStream) {
+      await startSelfieCamera();
+      return;
+    }
+    const name = selfieName ? selfieName.value.trim() : '';
+    if (!name) {
+      if (selfieStatus) selfieStatus.textContent = 'Sláðu inn nafnið þitt fyrst.';
+      return;
+    }
+    // Countdown
+    if (selfieCountdown) {
+      selfieCountdown.style.display = 'flex';
+      for (let i = 3; i >= 1; i--) {
+        selfieCountdown.textContent = String(i);
+        await new Promise(r => setTimeout(r, 800));
+      }
+      selfieCountdown.textContent = '';
+      selfieCountdown.style.display = 'none';
+    }
+    // Capture
+    const ctx = selfieCanvas.getContext('2d');
+    selfieCanvas.width = selfieVideo.videoWidth;
+    selfieCanvas.height = selfieVideo.videoHeight;
+    if (selfieFacingMode === 'user') {
+      ctx.translate(selfieCanvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(selfieVideo, 0, 0);
+    const imageData = selfieCanvas.toDataURL('image/jpeg', 0.7);
+    const caption = selfieCaption ? selfieCaption.value.trim() : '';
+    if (selfieStatus) selfieStatus.textContent = 'Sendi selfie...';
+    try {
+      const res = await fetch('/api/selfie/capture?slug=' + encodeURIComponent(currentSlug), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData, submittedBy: name, caption })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Mistókst');
+      if (selfieStatus) selfieStatus.textContent = 'Selfie vistað!';
+      if (selfieCaption) selfieCaption.value = '';
+      loadSelfieGallery();
+    } catch (err) {
+      if (selfieStatus) selfieStatus.textContent = 'Villa: ' + err.message;
+    }
+  });
+
+  async function loadSelfieGallery() {
+    if (!selfieGallery) return;
+    try {
+      const res = await fetch('/api/selfie/list?slug=' + encodeURIComponent(currentSlug));
+      const data = await res.json();
+      if (!res.ok) return;
+      const items = data.items || [];
+      if (!items.length) {
+        selfieGallery.innerHTML = '<div class="muted" style="grid-column:1/-1;text-align:center;">Engin selfie enn — taktu þig fyrst!</div>';
+        return;
+      }
+      selfieGallery.innerHTML = items.map(item =>
+        '<img src="' + item.imageData + '" alt="Selfie frá ' + (item.submittedBy || '') + '" data-selfie-id="' + item.id + '" data-caption="' + (item.caption || '') + '" data-by="' + (item.submittedBy || '') + '">'
+      ).join('');
+      selfieGallery.querySelectorAll('img').forEach(img => {
+        img.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (selfieLightbox) {
+            selfieLbImg.src = img.src;
+            selfieLbCaption.textContent = (img.dataset.by || '') + (img.dataset.caption ? ' — ' + img.dataset.caption : '');
+            selfieLbDownload.href = img.src;
+            selfieLightbox.classList.add('open');
+          }
+        });
+      });
+    } catch {}
+  }
+
+  if (selfieLbClose) selfieLbClose.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (selfieLightbox) selfieLightbox.classList.remove('open');
+  });
+
+  // Auto-start camera when scrolling to selfie section
+  const selfieSection = root.querySelector('#sec-selfie');
+  if (selfieSection && selfieVideo) {
+    const sObs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !selfieStream) startSelfieCamera();
+    }, { threshold: 0.3 });
+    sObs.observe(selfieSection);
+  }
+  loadSelfieGallery();
+
+  // ── MyKaraoke ─────────────────────────────────────
+  let karaokeFileData = null;
+  let karaokeCurrentSong = null;
+  let karaokeLyricsData = [];
+  let karaokeAnimFrame = null;
+
+  if (karaokeFile) karaokeFile.addEventListener('change', (ev) => {
+    ev.stopPropagation();
+    const file = karaokeFile.files[0];
+    if (!file) { karaokeFileData = null; if (karaokeUploadBtn) karaokeUploadBtn.disabled = true; return; }
+    if (file.size > 10 * 1024 * 1024) {
+      if (karaokeStatus) karaokeStatus.textContent = 'Skrá of stór (hámark 10MB)';
+      karaokeFileData = null;
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      karaokeFileData = reader.result;
+      if (karaokeUploadBtn) karaokeUploadBtn.disabled = false;
+      if (karaokeStatus) karaokeStatus.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB)';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  if (karaokeUploadBtn) karaokeUploadBtn.addEventListener('click', async (ev) => {
+    ev.stopPropagation();
+    const title = karaokeTitle ? karaokeTitle.value.trim() : '';
+    const artist = karaokeArtist ? karaokeArtist.value.trim() : '';
+    const addedBy = karaokeAddedBy ? karaokeAddedBy.value.trim() : '';
+    const manualLyrics = karaokeManualLyrics ? karaokeManualLyrics.value.trim() : '';
+    if (!title || !addedBy) {
+      if (karaokeStatus) karaokeStatus.textContent = 'Heiti lags og nafn eru nauðsynleg.';
+      return;
+    }
+    if (!karaokeFileData && !manualLyrics) {
+      if (karaokeStatus) karaokeStatus.textContent = 'Veldu hljóðskrá eða límdu lagatexta.';
+      return;
+    }
+    karaokeUploadBtn.disabled = true;
+    if (karaokeStatus) karaokeStatus.textContent = 'Hleð upp...';
+    try {
+      if (karaokeFileData) {
+        const res = await fetch('/api/karaoke/upload?slug=' + encodeURIComponent(currentSlug), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, artist, addedBy, audioBase64: karaokeFileData })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Mistókst');
+        if (karaokeStatus) karaokeStatus.textContent = 'Lag hlaðið upp! Umritun í gangi...';
+        // Auto-transcribe
+        try {
+          await fetch('/api/karaoke/transcribe?slug=' + encodeURIComponent(currentSlug) + '&id=' + data.song.id, { method: 'POST' });
+        } catch {}
+        if (manualLyrics) {
+          await fetch('/api/karaoke/lyrics?slug=' + encodeURIComponent(currentSlug) + '&id=' + data.song.id, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lyrics: manualLyrics })
+          });
+        }
+      } else if (manualLyrics) {
+        // Text-only mode: create placeholder song (no audio upload needed with manual lyrics)
+        if (karaokeStatus) karaokeStatus.textContent = 'Lagatexti eingöngu — hljóðskrá vantar til að spila.';
+      }
+      if (karaokeTitle) karaokeTitle.value = '';
+      if (karaokeArtist) karaokeArtist.value = '';
+      if (karaokeManualLyrics) karaokeManualLyrics.value = '';
+      karaokeFileData = null;
+      if (karaokeFile) karaokeFile.value = '';
+      loadKaraokeSongs();
+    } catch (err) {
+      if (karaokeStatus) karaokeStatus.textContent = 'Villa: ' + err.message;
+    }
+    karaokeUploadBtn.disabled = true;
+  });
+
+  async function loadKaraokeSongs() {
+    if (!karaokeSongList) return;
+    try {
+      const res = await fetch('/api/karaoke/songs?slug=' + encodeURIComponent(currentSlug));
+      const data = await res.json();
+      if (!res.ok) return;
+      const songs = data.songs || [];
+      if (!songs.length) {
+        karaokeSongList.innerHTML = '<div class="muted" style="text-align:center;">Engin lög enn — hladdu upp fyrsta laginu!</div>';
+        return;
+      }
+      karaokeSongList.innerHTML = songs.map(s =>
+        '<div class="karaoke-song-item" data-song-id="' + s.id + '">' +
+          '<div class="song-info"><div class="song-title">' + s.title + '</div>' +
+          '<div class="song-artist">' + (s.artist || s.addedBy) + '</div></div>' +
+          '<span class="karaoke-badge ' + s.status + '">' +
+          (s.status === 'ready' ? 'Tilbúið' : s.status === 'transcribing' ? 'Umritun...' : s.status === 'error' ? 'Villa' : 'Hlaðið') +
+          '</span></div>'
+      ).join('');
+      karaokeSongList.querySelectorAll('.karaoke-song-item').forEach(el => {
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          openKaraokePlayer(el.dataset.songId);
+        });
+      });
+    } catch {}
+  }
+
+  async function openKaraokePlayer(songId) {
+    if (!karaokePlayerView || !karaokeAudio) return;
+    try {
+      const [metaRes, audioRes] = await Promise.all([
+        fetch('/api/karaoke/song?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId),
+        fetch('/api/karaoke/audio?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId)
+      ]);
+      const meta = await metaRes.json();
+      const audio = await audioRes.json();
+      if (!metaRes.ok || !audioRes.ok) return;
+      karaokeCurrentSong = meta;
+      karaokeLyricsData = meta.lyrics || [];
+      if (karaokeNowTitle) karaokeNowTitle.textContent = meta.title;
+      if (karaokeNowArtist) karaokeNowArtist.textContent = meta.artist || meta.addedBy || '';
+      // Set audio source
+      karaokeAudio.src = audio.audioBase64;
+      karaokeAudio.load();
+      // Render lyrics
+      renderKaraokeLyrics(karaokeLyrics, karaokeLyricsData, meta.manualLyrics);
+      if (karaokeFsLyrics) renderKaraokeLyrics(karaokeFsLyrics, karaokeLyricsData, meta.manualLyrics);
+      // Show player
+      karaokePlayerView.classList.add('active');
+      if (karaokeUploadView) karaokeUploadView.style.display = 'none';
+    } catch {}
+  }
+
+  function renderKaraokeLyrics(container, lyrics, manualLyrics) {
+    if (!container) return;
+    if (lyrics && lyrics.length) {
+      container.innerHTML = lyrics.map((w, i) =>
+        '<span class="word" data-word-idx="' + i + '">' + w.word + '</span>'
+      ).join(' ');
+    } else if (manualLyrics) {
+      container.innerHTML = manualLyrics.split('\n').map(line =>
+        '<div style="margin-bottom:0.5em;">' + line + '</div>'
+      ).join('');
+    } else {
+      container.innerHTML = '<div class="muted">Enginn lagatexti tiltækur</div>';
+    }
+  }
+
+  function updateKaraokeLyrics(currentTime) {
+    if (!karaokeLyricsData.length) return;
+    const containers = [karaokeLyrics, karaokeFsLyrics].filter(Boolean);
+    containers.forEach(container => {
+      const words = container.querySelectorAll('.word');
+      words.forEach((el, i) => {
+        const w = karaokeLyricsData[i];
+        if (!w) return;
+        el.classList.remove('active', 'past');
+        if (currentTime >= w.start && currentTime <= w.end) {
+          el.classList.add('active');
+        } else if (currentTime > w.end) {
+          el.classList.add('past');
+        }
+      });
+      // Auto-scroll to active word
+      const activeEl = container.querySelector('.word.active');
+      if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  function startLyricsSync() {
+    if (karaokeAnimFrame) cancelAnimationFrame(karaokeAnimFrame);
+    function loop() {
+      if (karaokeAudio && !karaokeAudio.paused) {
+        updateKaraokeLyrics(karaokeAudio.currentTime);
+        const dur = karaokeAudio.duration || 1;
+        const pct = (karaokeAudio.currentTime / dur) * 100;
+        if (karaokeSeek) karaokeSeek.value = pct;
+        if (karaokeFsSeek) karaokeFsSeek.value = pct;
+        const m = Math.floor(karaokeAudio.currentTime / 60);
+        const s = Math.floor(karaokeAudio.currentTime % 60);
+        const timeStr = m + ':' + String(s).padStart(2, '0');
+        if (karaokeTime) karaokeTime.textContent = timeStr;
+        if (karaokeFsTime) karaokeFsTime.textContent = timeStr;
+      }
+      karaokeAnimFrame = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+
+  function toggleKaraokePlay() {
+    if (!karaokeAudio) return;
+    if (karaokeAudio.paused) {
+      karaokeAudio.play();
+      if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#10074;&#10074;';
+      if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#10074;&#10074;';
+      startLyricsSync();
+    } else {
+      karaokeAudio.pause();
+      if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
+      if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
+    }
+  }
+
+  if (karaokePlayBtn) karaokePlayBtn.addEventListener('click', (ev) => { ev.stopPropagation(); toggleKaraokePlay(); });
+  if (karaokeFsPlay) karaokeFsPlay.addEventListener('click', (ev) => { ev.stopPropagation(); toggleKaraokePlay(); });
+
+  [karaokeSeek, karaokeFsSeek].forEach(seek => {
+    if (seek) seek.addEventListener('input', (ev) => {
+      ev.stopPropagation();
+      if (karaokeAudio && karaokeAudio.duration) {
+        karaokeAudio.currentTime = (seek.value / 100) * karaokeAudio.duration;
+      }
+    });
+  });
+
+  if (karaokeBackBtn) karaokeBackBtn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (karaokeAudio) { karaokeAudio.pause(); karaokeAudio.src = ''; }
+    if (karaokeAnimFrame) cancelAnimationFrame(karaokeAnimFrame);
+    if (karaokePlayerView) karaokePlayerView.classList.remove('active');
+    if (karaokeUploadView) karaokeUploadView.style.display = '';
+    if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
+    loadKaraokeSongs();
+  });
+
+  if (karaokeFullscreenBtn) karaokeFullscreenBtn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (karaokeFullscreen) karaokeFullscreen.classList.add('open');
+  });
+  if (karaokeFsClose) karaokeFsClose.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (karaokeFullscreen) karaokeFullscreen.classList.remove('open');
+  });
+
+  if (karaokeAudio) karaokeAudio.addEventListener('ended', () => {
+    if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
+    if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
+  });
+
+  loadKaraokeSongs();
 
   refreshStats();
 }
