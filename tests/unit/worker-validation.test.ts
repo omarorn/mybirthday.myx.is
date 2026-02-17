@@ -7,6 +7,61 @@ function unique(label: string): string {
   return `${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// Lightweight in-memory D1 mock for unit tests
+function createMockDB() {
+  const tables: Record<string, Record<string, unknown>[]> = {};
+  function getTable(name: string) {
+    if (!tables[name]) tables[name] = [];
+    return tables[name];
+  }
+  return {
+    prepare(sql: string) {
+      let boundValues: unknown[] = [];
+      const stmt = {
+        bind(...values: unknown[]) {
+          boundValues = values;
+          return stmt;
+        },
+        async run() {
+          const table = sql.match(/(?:INSERT INTO|UPDATE|DELETE FROM)\s+(\w+)/i)?.[1];
+          if (table && sql.toUpperCase().startsWith("INSERT")) {
+            const row: Record<string, unknown> = {};
+            const colMatch = sql.match(/\(([^)]+)\)\s*VALUES/i);
+            if (colMatch) {
+              const cols = colMatch[1].split(",").map((c) => c.trim());
+              cols.forEach((col, i) => {
+                row[col] = boundValues[i] ?? null;
+              });
+            }
+            getTable(table).push(row);
+          }
+          return { success: true, meta: { changes: 1 } };
+        },
+        async all() {
+          const table = sql.match(/FROM\s+(\w+)/i)?.[1];
+          return { results: table ? getTable(table) : [] };
+        },
+        async first() {
+          const table = sql.match(/FROM\s+(\w+)/i)?.[1];
+          if (!table) return null;
+          const rows = getTable(table);
+          const slugIdx = sql.indexOf("slug = ?");
+          if (slugIdx >= 0 && boundValues.length > 0) {
+            return rows.find((r) => r.slug === boundValues[0]) ?? null;
+          }
+          return rows[0] ?? null;
+        },
+      };
+      return stmt;
+    },
+    batch(stmts: any[]) {
+      return Promise.all(stmts.map((s: any) => s.run()));
+    },
+  };
+}
+
+const mockEnv = { DB: createMockDB(), ADMIN_PASSWORD: "changeme" } as any;
+
 async function postJson(
   path: string,
   body: unknown,
@@ -17,7 +72,7 @@ async function postJson(
     headers: { ...jsonHeaders, ...headers },
     body: JSON.stringify(body),
   });
-  return worker.fetch(request, {});
+  return worker.fetch(request, mockEnv);
 }
 
 describe("worker validation guards", () => {
@@ -34,7 +89,7 @@ describe("worker validation guards", () => {
       }),
     });
 
-    const response = await worker.fetch(request, {});
+    const response = await worker.fetch(request, mockEnv);
     const payload = await response.json();
 
     expect(response.status).toBe(415);
@@ -55,7 +110,7 @@ describe("worker validation guards", () => {
       }),
     });
 
-    const response = await worker.fetch(request, {});
+    const response = await worker.fetch(request, mockEnv);
     const payload = await response.json();
 
     expect(response.status).toBe(413);
@@ -125,7 +180,7 @@ describe("critical API routes", () => {
   it("validates quiz answers (success + out-of-range failure)", async () => {
     const questionsResponse = await worker.fetch(
       new Request("https://example.com/api/quiz/questions"),
-      {},
+      mockEnv,
     );
     const questionsPayload = await questionsResponse.json();
     const question = questionsPayload.questions[0];

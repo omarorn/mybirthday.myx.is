@@ -1,5 +1,5 @@
 /**
- * Photo wall route handlers and persistence.
+ * Photo wall route handlers and persistence (D1).
  */
 
 import type { Env, PhotoWallItem } from "../types";
@@ -13,31 +13,30 @@ import {
   isValidHttpUrl,
   isAdmin,
 } from "../helpers";
-import { memoryPhotoWall } from "../state";
 import { loadTenant } from "./hosting";
 
-// ── Persistence ──────────────────────────────────────────────────
+// ── Row mapping ─────────────────────────────────────────────────
 
-async function loadPhotoWall(env: Env, slug: string): Promise<PhotoWallItem[]> {
-  if (!env.QUIZ_DATA) return memoryPhotoWall.get(slug) ?? [];
-  const raw = await env.QUIZ_DATA.get(`photowall:${slug}`);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as PhotoWallItem[];
-  } catch {
-    return [];
-  }
+function rowToPhoto(row: Record<string, unknown>): PhotoWallItem {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    imageUrl: row.image_url as string,
+    caption: (row.caption as string) || undefined,
+    sourceUrl: (row.source_url as string) || undefined,
+    addedAt: row.added_at as string,
+  };
 }
 
-async function savePhotoWall(
-  env: Env,
-  slug: string,
-  items: PhotoWallItem[],
-): Promise<void> {
-  memoryPhotoWall.set(slug, items);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(`photowall:${slug}`, JSON.stringify(items));
-  }
+// ── Persistence (D1) ────────────────────────────────────────────
+
+async function loadPhotoWall(env: Env, slug: string): Promise<PhotoWallItem[]> {
+  const result = await env.DB.prepare(
+    "SELECT * FROM photos WHERE slug = ? ORDER BY added_at DESC LIMIT 200",
+  )
+    .bind(slug)
+    .all();
+  return (result.results ?? []).map(rowToPhoto);
 }
 
 // ── Route handler ────────────────────────────────────────────────
@@ -85,6 +84,7 @@ export async function handlePhotowallRoutes(
     const sourceUrl = readStringField(body.sourceUrl, "sourceUrl", 2000);
     if (sourceUrl && !isValidHttpUrl(sourceUrl))
       throw new HttpError(400, "sourceUrl er ógild");
+
     const item: PhotoWallItem = {
       id: crypto.randomUUID(),
       slug,
@@ -93,9 +93,21 @@ export async function handlePhotowallRoutes(
       sourceUrl,
       addedAt: new Date().toISOString(),
     };
-    const items = await loadPhotoWall(env, slug);
-    items.unshift(item);
-    await savePhotoWall(env, slug, items.slice(0, 200));
+
+    await env.DB.prepare(
+      `INSERT INTO photos (id, slug, image_url, caption, source_url, added_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        item.id,
+        item.slug,
+        item.imageUrl,
+        item.caption ?? null,
+        item.sourceUrl ?? null,
+        item.addedAt,
+      )
+      .run();
+
     return json({ success: true, item }, 201);
   }
 
@@ -108,9 +120,13 @@ export async function handlePhotowallRoutes(
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const id = url.searchParams.get("id") || "";
     if (!id) return json({ error: "Auðkenni vantar" }, 400);
-    const items = await loadPhotoWall(env, slug);
-    const filtered = items.filter((x) => x.id !== id);
-    await savePhotoWall(env, slug, filtered);
+
+    await env.DB.prepare(
+      "DELETE FROM photos WHERE id = ? AND slug = ?",
+    )
+      .bind(id, slug)
+      .run();
+
     return json({ success: true, id, slug });
   }
 

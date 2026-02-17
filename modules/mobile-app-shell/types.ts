@@ -104,8 +104,9 @@ export interface EventRecord {
 
 export interface SelfieItem {
   id: string;
-  slug: string;
-  imageKey: string;
+  slug?: string;
+  imageKey?: string;
+  imageData?: string;
   caption?: string;
   submittedBy: string;
   takenAt: string;
@@ -118,6 +119,8 @@ export interface KaraokeSong {
   audioKey: string;
   lyrics?: TranscriptSegment[];
   manualLyrics?: string;
+  transcription?: string;
+  vtt?: string;
   chords?: string[];
   preset?: boolean;
   duration?: number;

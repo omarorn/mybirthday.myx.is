@@ -1,5 +1,5 @@
 /**
- * Hosting/tenant route handlers and persistence.
+ * Hosting/tenant route handlers and persistence (D1).
  */
 
 import type { Env, TenantConfig } from "../types";
@@ -11,29 +11,54 @@ import {
   slugify,
   getSlugFromPath,
 } from "../helpers";
-import { memoryTenants } from "../state";
 
-// ── Persistence ──────────────────────────────────────────────────
+// ── Row mapping ─────────────────────────────────────────────────
+
+function rowToTenant(row: Record<string, unknown>): TenantConfig {
+  return {
+    slug: row.slug as string,
+    title: row.title as string,
+    hashtag: row.hashtag as string,
+    instagramHandle: (row.instagram_handle as string) || undefined,
+    owner: (row.owner as string) || undefined,
+    createdAt: row.created_at as string,
+  };
+}
+
+// ── Persistence (D1) ────────────────────────────────────────────
 
 export async function loadTenant(
   env: Env,
   slug: string,
 ): Promise<TenantConfig | null> {
-  if (!env.QUIZ_DATA) return memoryTenants.get(slug) ?? null;
-  const raw = await env.QUIZ_DATA.get(`tenant:${slug}`);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as TenantConfig;
-  } catch {
-    return null;
-  }
+  const row = await env.DB.prepare(
+    "SELECT * FROM tenants WHERE slug = ?",
+  )
+    .bind(slug)
+    .first();
+  if (!row) return null;
+  return rowToTenant(row as Record<string, unknown>);
 }
 
 export async function saveTenant(env: Env, tenant: TenantConfig): Promise<void> {
-  memoryTenants.set(tenant.slug, tenant);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(`tenant:${tenant.slug}`, JSON.stringify(tenant));
-  }
+  await env.DB.prepare(
+    `INSERT INTO tenants (slug, title, hashtag, instagram_handle, owner, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(slug) DO UPDATE SET
+       title = excluded.title,
+       hashtag = excluded.hashtag,
+       instagram_handle = excluded.instagram_handle,
+       owner = excluded.owner`,
+  )
+    .bind(
+      tenant.slug,
+      tenant.title,
+      tenant.hashtag,
+      tenant.instagramHandle ?? null,
+      tenant.owner ?? null,
+      tenant.createdAt,
+    )
+    .run();
 }
 
 // ── Route handler ────────────────────────────────────────────────

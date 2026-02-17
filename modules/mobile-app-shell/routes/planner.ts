@@ -1,5 +1,5 @@
 /**
- * Planner application route handlers and persistence.
+ * Planner application route handlers and persistence (D1).
  */
 
 import type { Env, PlannerApplication } from "../types";
@@ -11,33 +11,34 @@ import {
   slugify,
   isAdmin,
 } from "../helpers";
-import { memoryPlannerApplications } from "../state";
 
-// ── Persistence ──────────────────────────────────────────────────
+// ── Row mapping ─────────────────────────────────────────────────
+
+function rowToPlanner(row: Record<string, unknown>): PlannerApplication {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    type: row.type as "host_add" | "surprise_help",
+    applicantName: row.applicant_name as string,
+    contact: row.contact as string,
+    forGuest: (row.for_guest as string) || undefined,
+    note: row.note as string,
+    createdAt: row.created_at as string,
+  };
+}
+
+// ── Persistence (D1) ────────────────────────────────────────────
 
 export async function loadPlannerApplications(
   env: Env,
   slug: string,
 ): Promise<PlannerApplication[]> {
-  if (!env.QUIZ_DATA) return memoryPlannerApplications.get(slug) ?? [];
-  const raw = await env.QUIZ_DATA.get(`planner:${slug}`);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as PlannerApplication[];
-  } catch {
-    return [];
-  }
-}
-
-async function savePlannerApplications(
-  env: Env,
-  slug: string,
-  items: PlannerApplication[],
-): Promise<void> {
-  memoryPlannerApplications.set(slug, items);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(`planner:${slug}`, JSON.stringify(items));
-  }
+  const result = await env.DB.prepare(
+    "SELECT * FROM planner_applications WHERE slug = ? ORDER BY created_at DESC LIMIT 300",
+  )
+    .bind(slug)
+    .all();
+  return (result.results ?? []).map(rowToPlanner);
 }
 
 // ── Route handler ────────────────────────────────────────────────
@@ -80,9 +81,23 @@ export async function handlePlannerRoutes(
       note,
       createdAt: new Date().toISOString(),
     };
-    const existing = await loadPlannerApplications(env, slug);
-    existing.unshift(application);
-    await savePlannerApplications(env, slug, existing.slice(0, 300));
+
+    await env.DB.prepare(
+      `INSERT INTO planner_applications (id, slug, type, applicant_name, contact, for_guest, note, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        application.id,
+        application.slug,
+        application.type,
+        application.applicantName,
+        application.contact,
+        application.forGuest ?? null,
+        application.note,
+        application.createdAt,
+      )
+      .run();
+
     return json({ success: true, application }, 201);
   }
 
