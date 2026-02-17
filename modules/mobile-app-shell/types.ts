@@ -51,6 +51,8 @@ export interface PlayerStats {
 }
 
 export interface Env {
+  DB: D1Database;
+  MEDIA_BUCKET: R2Bucket;
   QUIZ_DATA?: KVNamespace;
   ADMIN_PASSWORD?: string;
   AI?: Ai;
@@ -102,7 +104,8 @@ export interface EventRecord {
 
 export interface SelfieItem {
   id: string;
-  imageData: string;
+  slug: string;
+  imageKey: string;
   caption?: string;
   submittedBy: string;
   takenAt: string;
