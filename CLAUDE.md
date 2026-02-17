@@ -45,6 +45,9 @@ npm run deploy
 ## Testing and Quality Gate
 
 - Unit/regression tests: `tests/unit/worker-validation.test.ts`
+- API docs:
+  - `docs/api.md` (human readable)
+  - `docs/openapi.json` (machine readable)
 - Minimum local gate before major merges:
 
 ```bash
