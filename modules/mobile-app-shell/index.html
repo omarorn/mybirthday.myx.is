@@ -67,8 +67,12 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 @media (min-width: 769px) {
   .desktop-wrapper {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
     height: 100vh;
     overflow: hidden;
+    padding: 1.5rem;
     background: var(--bg);
     background-image:
       radial-gradient(ellipse at 20% 50%, var(--grid-line) 0%, transparent 60%),
@@ -88,14 +92,11 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   }
   .desktop-story {
     flex: 1;
+    max-width: 420px;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    padding: 3rem 3.5rem 2rem 5rem;
-    max-width: 520px;
-    position: relative;
-    z-index: 1;
-    overflow-y: auto;
+    justify-content: center;
   }
   .desktop-story .eyebrow {
     font-family: var(--font-mono);
@@ -121,13 +122,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
     opacity: 0; animation: fadeUp 0.6s ease forwards 0.6s;
   }
 
-  .phone-wrapper {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-  }
+  .phone-wrapper { display: flex; align-items: center; justify-content: center; }
   .phone-frame {
     width: 390px;
     height: 844px;
@@ -154,15 +149,27 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   }
   .phone-content::-webkit-scrollbar { width: 0; }
 
-  .desktop-right {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 3rem 5rem 3rem 3.5rem;
-    max-width: 520px;
-    position: relative;
-    z-index: 1;
+  .desktop-right { display: none; }
+
+  /* Desktop: keep nav inside simulated phone, not viewport */
+  .phone-content .bottom-nav {
+    position: sticky;
+    left: auto;
+    bottom: 0.75rem;
+    transform: none;
+    width: calc(100% - 1rem);
+    margin: 0 auto;
+    border-radius: 18px;
+    z-index: 30;
+  }
+  .phone-content .nav-feedback {
+    position: sticky;
+    left: auto;
+    bottom: calc(0.75rem + 62px);
+    transform: none;
+    width: fit-content;
+    margin: 0 auto 0.35rem;
+    z-index: 30;
   }
 
   .mobile-only { display: none !important; }
@@ -212,8 +219,17 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.animate-on-scroll { opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
+.animate-on-scroll { opacity: 0; transform: translateY(24px); transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1); }
 .animate-on-scroll.visible { opacity: 1; transform: translateY(0); }
+.animate-on-scroll:nth-child(2) { transition-delay: 0.06s; }
+.animate-on-scroll:nth-child(3) { transition-delay: 0.12s; }
+.animate-on-scroll:nth-child(4) { transition-delay: 0.18s; }
+.animate-on-scroll:nth-child(5) { transition-delay: 0.24s; }
+.animate-on-scroll:nth-child(6) { transition-delay: 0.30s; }
+.animate-on-scroll:nth-child(7) { transition-delay: 0.36s; }
+.animate-on-scroll:nth-child(8) { transition-delay: 0.42s; }
+.animate-on-scroll:nth-child(9) { transition-delay: 0.48s; }
+.animate-on-scroll:nth-child(10) { transition-delay: 0.54s; }
 
 .safe-top { padding-top: max(env(safe-area-inset-top), 12px); }
 .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
@@ -256,11 +272,36 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .muted { color: var(--text-secondary); }
 .hero {
   margin: 1rem;
-  padding: 1rem;
+  padding: 1.25rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--gradient);
+  position: relative;
+  overflow: hidden;
 }
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent 0%, var(--glow) 10%, transparent 20%);
+  animation: heroShimmer 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes heroShimmer {
+  to { transform: rotate(360deg); }
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--radius) - 1px);
+  background: var(--gradient);
+  z-index: 0;
+}
+.hero > * { position: relative; z-index: 1; }
 .hero-wrap { display: grid; grid-template-columns: 88px 1fr; gap: 0.9rem; align-items: center; }
 .hero-photo {
   width: 88px;
@@ -269,8 +310,105 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   border: 2px solid var(--accent);
   object-fit: cover;
   background: var(--surface-hover);
+  box-shadow: 0 0 20px var(--glow), 0 0 40px color-mix(in srgb, var(--accent) 12%, transparent);
+  animation: photoGlow 3s ease-in-out infinite alternate;
+}
+@keyframes photoGlow {
+  from { box-shadow: 0 0 20px var(--glow), 0 0 40px color-mix(in srgb, var(--accent) 12%, transparent); }
+  to { box-shadow: 0 0 28px var(--glow), 0 0 56px color-mix(in srgb, var(--accent) 18%, transparent); }
 }
 .hero-count { font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent); margin-top: 0.25rem; }
+
+/* Countdown flip-clock */
+.countdown-grid {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  justify-content: center;
+}
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+.countdown-unit:not(:last-child)::after {
+  content: none;
+}
+.countdown-digits {
+  display: flex;
+  gap: 2px;
+}
+.countdown-digit {
+  width: 28px;
+  height: 38px;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 49%, color-mix(in srgb, var(--border) 40%, var(--surface)) 49%, color-mix(in srgb, var(--border) 40%, var(--surface)) 51%, color-mix(in srgb, var(--surface) 92%, #000) 51%, color-mix(in srgb, var(--surface) 92%, #000) 100%);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--glow);
+  position: relative;
+  overflow: hidden;
+}
+.countdown-digit::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+  pointer-events: none;
+}
+.countdown-digit.tick {
+  animation: digitTick 0.3s ease;
+}
+@keyframes digitTick {
+  0% { transform: scaleY(1); }
+  30% { transform: scaleY(0.85); }
+  60% { transform: scaleY(1.04); }
+  100% { transform: scaleY(1); }
+}
+.countdown-label {
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.countdown-sep {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.5;
+  align-self: flex-start;
+  padding-top: 0.5rem;
+  animation: sepPulse 1s ease-in-out infinite;
+}
+@keyframes sepPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.hero-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.hero-age {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  text-shadow: 0 0 16px var(--glow);
+}
 .quiz-title { font-weight: 600; margin-bottom: 0.45rem; color: var(--text-primary); }
 .quiz-option {
   display: block;
@@ -530,12 +668,17 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 
 <div class="desktop-wrapper">
   <div class="desktop-story">
-    <div class="eyebrow">2076 PARTÝAPP</div>
-    <h1>Afmæli mitt <span class="highlight">Omar 50</span></h1>
+    <div class="eyebrow">19. JÚNÍ 2026 &mdash; REYKJAVÍK</div>
+    <h1>Afmæli<br><span class="highlight">Omar 50</span></h1>
     <p>
-      Farsímafyrst partýskipulag fyrir 19. júní 2026. Útlitið heldur upprunalegu skeljarstílnum,
-      með hlutum fyrir boðssvör, tengla, leiðir og Omar 50 tímalínu innblásna af Bók Lífsins og omar4.0.
+      Farsímafyrst partýskipulag. Sveipið í símunarammanum til hægri
+      til að skoða boðssvör, spurningaleik, selfie-klefa, karaoke og fleira.
     </p>
+    <div style="margin-top:2rem; display:flex; gap:0.75rem; opacity:0; animation: fadeUp 0.6s ease forwards 0.8s;">
+      <span style="font-family:var(--font-mono); font-size:0.7rem; padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary);">RSVP</span>
+      <span style="font-family:var(--font-mono); font-size:0.7rem; padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary);">QUIZ</span>
+      <span style="font-family:var(--font-mono); font-size:0.7rem; padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary);">KARAOKE</span>
+    </div>
   </div>
 
   <div class="phone-wrapper">
@@ -557,10 +700,46 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   <section id="sec-home" class="hero animate-on-scroll">
     <div class="hero-wrap">
       <img class="hero-photo" src="/omar-birthday.jpg" alt="Birthday person photo" />
-      <div>
-        <div style="font-weight:700; font-size:1.1rem;">Omar verður 50 ára</div>
-        <div class="muted" style="font-size:0.86rem; margin-top:0.1rem;">19. júní 2026</div>
-        <div class="hero-count" data-countdown>Hleð niðurtalningu...</div>
+      <div class="hero-title-row">
+        <div>
+          <div style="font-weight:700; font-size:1.1rem;">Omar verður</div>
+          <div class="muted" style="font-size:0.82rem; margin-top:0.1rem;">19. júní 2026</div>
+        </div>
+        <div class="hero-age">50</div>
+      </div>
+    </div>
+    <div class="countdown-grid" data-countdown>
+      <div class="countdown-unit">
+        <div class="countdown-digits">
+          <div class="countdown-digit" data-cd="d0">0</div>
+          <div class="countdown-digit" data-cd="d1">0</div>
+          <div class="countdown-digit" data-cd="d2">0</div>
+        </div>
+        <div class="countdown-label">dagar</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-digits">
+          <div class="countdown-digit" data-cd="h0">0</div>
+          <div class="countdown-digit" data-cd="h1">0</div>
+        </div>
+        <div class="countdown-label">klst</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-digits">
+          <div class="countdown-digit" data-cd="m0">0</div>
+          <div class="countdown-digit" data-cd="m1">0</div>
+        </div>
+        <div class="countdown-label">mín</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-digits">
+          <div class="countdown-digit" data-cd="s0">0</div>
+          <div class="countdown-digit" data-cd="s1">0</div>
+        </div>
+        <div class="countdown-label">sek</div>
       </div>
     </div>
   </section>
@@ -2073,20 +2252,43 @@ function initThemeSelector() {
 
 function startCountdown() {
   const target = new Date('2026-06-19T00:00:00');
+  const digitEls = {};
+  ['d0','d1','d2','h0','h1','m0','m1','s0','s1'].forEach(k => {
+    digitEls[k] = document.querySelectorAll('[data-cd="' + k + '"]');
+  });
+  const prev = {};
+  function setDigit(key, val) {
+    const v = String(val);
+    if (prev[key] !== v) {
+      prev[key] = v;
+      digitEls[key].forEach(el => {
+        el.textContent = v;
+        el.classList.remove('tick');
+        void el.offsetWidth;
+        el.classList.add('tick');
+      });
+    }
+  }
   function tick() {
     const now = new Date();
     const diff = target.getTime() - now.getTime();
-    const nodes = document.querySelectorAll('[data-countdown]');
     if (diff <= 0) {
-      nodes.forEach((n) => { n.textContent = 'Til hamingju með afmælið!'; });
+      const grids = document.querySelectorAll('[data-countdown]');
+      grids.forEach(g => { g.innerHTML = '<div style="font-size:1rem;text-align:center;padding:0.5rem 0;color:var(--accent);">Til hamingju með afmælið!</div>'; });
       return;
     }
     const d = Math.floor(diff / 86400000);
     const h = Math.floor((diff % 86400000) / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
-    const text = d + 'd ' + h + 'h ' + m + 'm ' + s + 's í partý';
-    nodes.forEach((n) => { n.textContent = text; });
+    const ds = String(d).padStart(3, '0');
+    setDigit('d0', ds[0]); setDigit('d1', ds[1]); setDigit('d2', ds[2]);
+    const hs = String(h).padStart(2, '0');
+    setDigit('h0', hs[0]); setDigit('h1', hs[1]);
+    const ms = String(m).padStart(2, '0');
+    setDigit('m0', ms[0]); setDigit('m1', ms[1]);
+    const ss = String(s).padStart(2, '0');
+    setDigit('s0', ss[0]); setDigit('s1', ss[1]);
   }
   tick();
   setInterval(tick, 1000);

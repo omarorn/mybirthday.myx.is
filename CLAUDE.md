@@ -32,28 +32,31 @@ npm run deploy
 - Keep timing-safe comparison for secret checks
 - Do not replace with direct string `===` for secrets
 
-## API Groups in `worker.ts`
+## API Groups (modular routes)
 
-- RSVP: `/api/rsvp`, `/api/rsvp/stats`
-- Quiz: questions, answer, leaderboard/player, admin question CRUD
-- Events: create, clone, public view, owner dashboard
-- Hosting: signup, tenant lookup
-- Photo wall: list, add, delete
-- Planner: apply, admin applications list
-- Selfie: list, capture, delete
-- Karaoke: songs, song detail, audio stream, upload, transcribe, lyrics, delete
-- Admin overview: `/api/admin/overview`
+Routes live in `modules/mobile-app-shell/routes/*.ts`, dispatched by the slim router in `worker.ts`.
+
+- RSVP (`rsvp.ts`): `/api/rsvp`, `/api/rsvp/stats`
+- Quiz (`quiz.ts`): questions, answer, leaderboard/player, admin question CRUD
+- Events (`events.ts`): create, clone, public view, owner dashboard
+- Hosting (`hosting.ts`): signup, tenant lookup
+- Photo wall (`photowall.ts`): list, add, delete
+- Planner (`planner.ts`): apply, admin applications list
+- Selfie (`selfie.ts`): list, capture, delete
+- Karaoke (`karaoke.ts`): songs, song detail, audio stream, upload, transcribe, lyrics, delete
+- Admin overview (`admin.ts`): `/api/admin/overview`
 
 ## Testing and Quality Gate
 
 - Unit/regression tests: `tests/unit/worker-validation.test.ts`
+- E2E smoke tests: `tests/e2e/` (Playwright — `npm run test:e2e`)
 - API docs:
   - `docs/api.md` (human readable)
   - `docs/openapi.json` (machine readable)
 - Minimum local gate before major merges:
 
 ```bash
-npm run lint && npm run build && npm run validate:openapi && npm run typecheck && npm run test
+npm run lint && npm run build && npm run validate:openapi && npm run typecheck && npm run test && npm run test:e2e
 ```
 
 ## Common Errors to Avoid
