@@ -5,9 +5,6 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 preview_urls = true
 
-[observability]
-enabled = true
-
 routes = [
   { pattern = "mybirthday.myx.is", custom_domain = true }
 ]
@@ -27,3 +24,6 @@ binding = "AI"
 [vars]
 APP_NAME = "MYX.IS"
 PORTAL = "mybirthday"
+
+[observability]
+enabled = true

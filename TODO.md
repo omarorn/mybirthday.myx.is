@@ -15,20 +15,21 @@ Last updated: 2026-02-17
 5. npm scripts updated to explicitly use `wrangler.toml`:
    - `npm run dev`
    - `npm run deploy`
+6. Added and validated quality gate scripts:
+   - `npm run lint`
+   - `npm run build` (Wrangler dry-run bundle check)
+   - full gate verified locally: `lint + build + typecheck + test` all passing.
 
 ## Current Priorities
 
-1. Add missing scripts to satisfy full pre-commit gate in AGENTS:
-   - `lint`
-   - `build`
-2. Expand test coverage for all critical API routes:
+1. Expand test coverage for all critical API routes:
    - `/api/rsvp`
    - `/api/quiz/answer`
    - `/api/events/create`
    - `/api/photowall/item`
    - `/api/planner/apply`
    - `/api/hosting/signup`
-3. Clean up documentation drift:
+2. Clean up documentation drift:
    - align `README.md` + `CLAUDE.md` with actual architecture (raw Worker + vanilla SPA).
 
 ## Next Technical Upgrades

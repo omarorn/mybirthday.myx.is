@@ -3,7 +3,7 @@
  * Landing page + RSVP APIs.
  */
 
-// @ts-ignore Wrangler bundles HTML imports
+// @ts-expect-error Wrangler bundles HTML imports
 import HTML from "./index.html";
 import { quizQuestions, type QuizQuestion } from "./quizData";
 
@@ -1268,7 +1268,8 @@ export default {
         const all = await getAllQuestions(env);
         const question = all.find((q) => q.id === id);
         if (!question) return json({ error: "Question not found" }, 404);
-        const { ans, ...safe } = question;
+        const safe = { ...question };
+        delete (safe as Partial<QuizQuestion>).ans;
         return json({ question: safe });
       }
 
@@ -1743,7 +1744,11 @@ export default {
         return json({
           slug,
           total: songs.length,
-          songs: songs.map(({ audioKey, ...s }) => s),
+          songs: songs.map((song) => {
+            const sanitized = { ...song };
+            delete (sanitized as { audioKey?: string }).audioKey;
+            return sanitized;
+          }),
         });
       }
 
@@ -1754,7 +1759,8 @@ export default {
         const songs = await loadKaraokeSongs(env, slug);
         const song = songs.find((s) => s.id === id);
         if (!song) return json({ error: "Lag fannst ekki" }, 404);
-        const { audioKey, ...meta } = song;
+        const meta = { ...song };
+        delete (meta as { audioKey?: string }).audioKey;
         return json(meta);
       }
 
