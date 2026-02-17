@@ -6,6 +6,35 @@ import type { Env, KaraokeSong, TranscriptSegment } from "../types";
 import { json, slugify, isAdmin } from "../helpers";
 import { memoryKaraokeSongs, memoryKaraokeAudio } from "../state";
 
+function presetKaraokeSongs(): KaraokeSong[] {
+  return [
+    {
+      id: "preset-hann-a-afmaeli-i-dag",
+      title: "Hann á afmæli í dag",
+      artist: "Afmæliskórinn",
+      audioKey: "",
+      manualLyrics: [
+        "Hann á afmæli í dag, hann á afmæli í dag,",
+        "hann á afmæli hann Omar, hann á afmæli í dag!",
+        "Húrra! Húrra! Húrra!",
+      ].join("\n"),
+      chords: ["G", "D", "Em", "C", "G", "D", "G"],
+      preset: true,
+      addedBy: "System",
+      createdAt: "2026-02-17T00:00:00.000Z",
+      status: "ready",
+    },
+  ];
+}
+
+function mergeWithPresets(storedSongs: KaraokeSong[]): KaraokeSong[] {
+  const presets = presetKaraokeSongs();
+  const stored = storedSongs.filter(
+    (song) => !presets.some((preset) => preset.id === song.id),
+  );
+  return [...presets, ...stored];
+}
+
 // ── Persistence ──────────────────────────────────────────────────
 
 async function loadKaraokeSongs(env: Env, slug: string): Promise<KaraokeSong[]> {
@@ -39,12 +68,15 @@ export async function handleKaraokeRoutes(
 ): Promise<Response | null> {
   if (url.pathname === "/api/karaoke/songs" && request.method === "GET") {
     const slug = slugify(url.searchParams.get("slug") || "omars50");
-    const songs = await loadKaraokeSongs(env, slug);
+    const songs = mergeWithPresets(await loadKaraokeSongs(env, slug));
     return json({
       slug,
       total: songs.length,
       songs: songs.map((song) => {
-        const sanitized = { ...song };
+        const sanitized = {
+          ...song,
+          hasAudio: Boolean(song.audioKey),
+        } as KaraokeSong & { audioKey?: string; hasAudio: boolean };
         delete (sanitized as { audioKey?: string }).audioKey;
         return sanitized;
       }),
@@ -55,10 +87,13 @@ export async function handleKaraokeRoutes(
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const id = url.searchParams.get("id");
     if (!id) return json({ error: "id vantar" }, 400);
-    const songs = await loadKaraokeSongs(env, slug);
+    const songs = mergeWithPresets(await loadKaraokeSongs(env, slug));
     const song = songs.find((s) => s.id === id);
     if (!song) return json({ error: "Lag fannst ekki" }, 404);
-    const meta = { ...song };
+    const meta = { ...song, hasAudio: Boolean(song.audioKey) } as KaraokeSong & {
+      audioKey?: string;
+      hasAudio: boolean;
+    };
     delete (meta as { audioKey?: string }).audioKey;
     return json(meta);
   }
@@ -67,9 +102,10 @@ export async function handleKaraokeRoutes(
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const id = url.searchParams.get("id");
     if (!id) return json({ error: "id vantar" }, 400);
-    const songs = await loadKaraokeSongs(env, slug);
+    const songs = mergeWithPresets(await loadKaraokeSongs(env, slug));
     const song = songs.find((s) => s.id === id);
     if (!song) return json({ error: "Lag fannst ekki" }, 404);
+    if (!song.audioKey) return json({ error: "Preset lag hefur enga hljóðskrá" }, 404);
     const audioKey = `karaoke:audio:${slug}:${id}`;
     let audioData: string | null = null;
     if (env.QUIZ_DATA) {
@@ -207,6 +243,9 @@ export async function handleKaraokeRoutes(
     const songs = await loadKaraokeSongs(env, slug);
     const song = songs.find((s) => s.id === id);
     if (!song) return json({ error: "Lag fannst ekki" }, 404);
+    if (song.preset) {
+      return json({ error: "Ekki má eyða preset lagi" }, 400);
+    }
     const filtered = songs.filter((s) => s.id !== id);
     await saveKaraokeSongs(env, slug, filtered);
     const audioKey = `karaoke:audio:${slug}:${id}`;

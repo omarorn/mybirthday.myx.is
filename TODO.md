@@ -1,6 +1,6 @@
 # TODO — mybirthday.myx.is
 
-Last updated: 2026-02-17 (post-deploy sync)
+Last updated: 2026-02-17 (ui-zone refactor sync)
 
 ## Done This Week
 
@@ -46,6 +46,19 @@ Last updated: 2026-02-17 (post-deploy sync)
     - script: `scripts/seed-boklifsins-test-user.js`
     - creates cross-feature test user data + 100 custom quiz questions
     - last run summary: `quizQuestionsCreated=100`, `failures=[]`
+13. Refactored mobile app shell layout into clearer UX zones in `modules/mobile-app-shell/index.html`:
+    - stronger landing section with quick action jump buttons
+    - “Vissir þú?”/fact widgets and extra truth flip-cards
+    - grouped “zone” headers to separate onboarding, game, media, and host areas
+    - preserved existing `sec-*` and `data-*` hooks to avoid JS regressions
+14. Added desktop-first admin split view in `modules/mobile-app-shell/index.html`:
+    - phone parser left, dedicated admin panel right
+    - desktop admin auto-mode plus live panel refresh every 15s
+    - quick control buttons for host/photos/refresh/event-loop
+15. Upgraded party and karaoke experience:
+    - random “dýnamít-kúla” burst with heavy confetti and temporary auto-healing UI glitch
+    - retro Nintendo-style background layer for birthday mode
+    - API-level karaoke preset (`Hann á afmæli í dag`) with lyrics + guitar chords
 
 ## Current Priorities
 

@@ -61,6 +61,65 @@
 
 html { font-size: 16px; scroll-behavior: smooth; }
 body { font-family: var(--font-body); background: var(--bg-dark); color: var(--text-primary); overflow-x: hidden; }
+.retro-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(9, 14, 28, 0.75), rgba(8, 10, 18, 0.86)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(90deg, rgba(245, 215, 122, 0.035) 0 1px, transparent 1px 18px);
+}
+.retro-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+  opacity: 0.6;
+}
+.retro-sprite {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  image-rendering: pixelated;
+  opacity: 0.8;
+  animation: retroFloat linear infinite;
+}
+.retro-sprite.coin {
+  background:
+    radial-gradient(circle at 36% 34%, #fff6c4 0 20%, transparent 20% 100%),
+    radial-gradient(circle, #f7cc45 0 58%, #c08314 58% 100%);
+  border: 1px solid rgba(0,0,0,0.25);
+  border-radius: 2px;
+}
+.retro-sprite.star {
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 94%, 50% 72%, 21% 94%, 32% 57%, 2% 35%, 39% 35%);
+  background: linear-gradient(180deg, #fff3a0, #f6b61f);
+}
+@keyframes retroFloat {
+  from { transform: translateY(104vh) translateX(0) rotate(0deg); }
+  to { transform: translateY(-18vh) translateX(26px) rotate(360deg); }
+}
+.retro-badge {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #fff7d2;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, var(--border-light));
+  border-radius: 999px;
+  padding: 0.32rem 0.56rem;
+  background: color-mix(in srgb, #11182a 80%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 24%, transparent);
+}
 
 .desktop-wrapper { display: none; }
 
@@ -92,37 +151,90 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   }
   .desktop-story {
     flex: 1;
-    max-width: 420px;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    max-width: 460px;
+    padding: 1.2rem;
+    display: grid;
+    gap: 1rem;
+    align-content: center;
   }
-  .desktop-story .eyebrow {
+  .gift-pack {
+    position: relative;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 1rem;
+    background: linear-gradient(165deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--surface) 92%, transparent));
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--shadow) 60%, transparent);
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeUp 0.65s ease forwards 0.2s;
+  }
+  .gift-pack::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -20%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 140%;
+    background: linear-gradient(180deg, #f4e2ac, #c4972f);
+    border-radius: 999px;
+    opacity: 0.85;
+  }
+  .gift-lid {
+    margin: 0 auto 0.75rem;
+    width: 92%;
+    height: 38px;
+    border: 1px solid color-mix(in srgb, var(--accent) 70%, var(--border-light));
+    border-radius: 10px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 35%, transparent), color-mix(in srgb, var(--surface) 88%, transparent));
+    transform-origin: center bottom;
+    transition: transform 0.8s cubic-bezier(.21,.9,.2,1), opacity 0.6s ease;
+  }
+  .desktop-wrapper.gift-open .gift-lid {
+    transform: translateY(-22px) rotateX(68deg);
+    opacity: 0.1;
+  }
+  .invite-card {
+    position: relative;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg) 68%, transparent);
+    padding: 1rem;
+  }
+  .invite-card .eyebrow {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.15em;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 1.2rem;
-    opacity: 0; animation: fadeUp 0.6s ease forwards 0.2s;
   }
-  .desktop-story h1 {
-    font-size: 2.4rem;
+  .invite-card h1 {
+    margin-top: 0.45rem;
+    font-size: 2.05rem;
     font-weight: 700;
-    line-height: 1.15;
-    margin-bottom: 1.5rem;
-    opacity: 0; animation: fadeUp 0.6s ease forwards 0.4s;
+    line-height: 1.1;
   }
-  .desktop-story h1 .highlight { color: var(--accent); }
-  .desktop-story p {
-    font-size: 1rem;
-    line-height: 1.7;
+  .invite-card h1 .highlight { color: var(--accent); }
+  .invite-card p {
+    margin-top: 0.7rem;
+    font-size: 0.94rem;
+    line-height: 1.6;
     color: var(--text-secondary);
-    opacity: 0; animation: fadeUp 0.6s ease forwards 0.6s;
   }
+  .gift-actions { margin-top: 0.85rem; display: flex; gap: 0.6rem; flex-wrap: wrap; }
 
-  .phone-wrapper { display: flex; align-items: center; justify-content: center; }
+  .phone-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(20px) scale(0.94);
+    transition: opacity 0.65s ease, transform 0.65s cubic-bezier(.22,1,.36,1);
+  }
+  .desktop-wrapper.gift-open .phone-wrapper {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
   .phone-frame {
     width: 390px;
     height: 844px;
@@ -149,7 +261,60 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   }
   .phone-content::-webkit-scrollbar { width: 0; }
 
-  .desktop-right { display: none; }
+  .desktop-right {
+    width: min(360px, 30vw);
+    max-height: 88vh;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    box-shadow: 0 20px 45px color-mix(in srgb, var(--shadow) 65%, transparent);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .desktop-admin-head {
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent);
+  }
+  .desktop-admin-title { font-size: 1rem; font-weight: 700; }
+  .desktop-admin-sub { margin-top: 0.2rem; font-size: 0.78rem; color: var(--text-secondary); }
+  .desktop-admin-body {
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.65rem;
+    overflow: auto;
+  }
+  .desktop-admin-row { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+  .desktop-admin-row input {
+    width: 100%;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    color: var(--text-primary);
+    padding: 0.58rem 0.66rem;
+    font-size: 0.84rem;
+  }
+  .desktop-admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .desktop-admin-kpi {
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 0.55rem 0.6rem;
+    background: color-mix(in srgb, var(--bg) 74%, transparent);
+  }
+  .desktop-admin-kpi .k { font-size: 0.66rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .desktop-admin-kpi .v { margin-top: 0.15rem; font-size: 0.95rem; font-weight: 700; }
+  .desktop-admin-log {
+    max-height: 240px;
+    overflow: auto;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
 
   /* Desktop: keep nav inside simulated phone, not viewport */
   .phone-content .bottom-nav {
@@ -188,6 +353,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   transition: all 0.2s;
 }
 .card:hover { background: var(--bg-card-hover); border-color: var(--border-light); }
+.stack-card { margin-bottom: 0.75rem; }
 
 .kpi {
   display: flex;
@@ -409,6 +575,90 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   line-height: 1;
   text-shadow: 0 0 16px var(--glow);
 }
+.hero-subline {
+  margin-top: 0.7rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.hero-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.widget-pill {
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 74%, transparent);
+  padding: 0.5rem;
+}
+.widget-pill .label {
+  font-size: 0.64rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.widget-pill .value {
+  margin-top: 0.12rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.zone {
+  padding: 0 1rem 1rem;
+}
+.zone-shell {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  padding: 0.75rem;
+}
+.zone-head {
+  margin-bottom: 0.7rem;
+  padding: 0.2rem 0.2rem 0.45rem;
+  border-bottom: 1px dashed color-mix(in srgb, var(--border-light) 75%, transparent);
+}
+.zone-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+.zone-copy {
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.truth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+}
+.truth-grid .flip-face.front {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+}
+.truth-grid .flip-face.back {
+  display: flex;
+  align-items: center;
+  font-size: 0.79rem;
+}
+.zone-metrics {
+  padding: 0 1rem 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+@media (max-width: 420px) {
+  .widget-grid { grid-template-columns: 1fr; }
+  .truth-grid { grid-template-columns: 1fr; }
+}
 .quiz-title { font-weight: 600; margin-bottom: 0.45rem; color: var(--text-primary); }
 .quiz-option {
   display: block;
@@ -444,6 +694,54 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   width: 1px;
   height: 44px;
   background: var(--party-string);
+}
+.balloon.pop {
+  opacity: 0;
+  transform: scale(1.6);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.balloon.dynamite {
+  background: radial-gradient(circle at 35% 28%, #7c879b 0%, #1b2231 45%, #0a0c12 100%);
+  border: 1px solid #ff6b3d;
+  box-shadow: 0 0 14px rgba(255, 107, 61, 0.45);
+}
+.balloon.dynamite::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 10px;
+  height: 9px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #ff7a59, #b63a22);
+  transform: translateX(-50%) rotate(-8deg);
+}
+.balloon-burst {
+  position: fixed;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  z-index: 12;
+  animation: burstOut 0.48s ease forwards;
+}
+@keyframes burstOut {
+  from { opacity: 0.95; transform: translate(-50%, -50%) scale(0.2); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
+}
+.confetti-piece {
+  position: fixed;
+  width: 8px;
+  height: 12px;
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 11;
+  animation: confettiDrop linear forwards;
+}
+@keyframes confettiDrop {
+  from { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  to { opacity: 0; transform: translate(var(--drift-x), var(--drift-y)) rotate(var(--spin)); }
 }
 .glitter {
   position: absolute;
@@ -609,6 +907,31 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .nav-chip .label {
   line-height: 1;
 }
+.damage-glitch {
+  position: relative;
+  pointer-events: none;
+  filter: saturate(0.15) contrast(1.25);
+  animation: damageJolt 0.26s steps(2, end) 5;
+}
+.damage-glitch::after {
+  content: 'Bilun... viðgerð keyrir';
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  font-size: 0.62rem;
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  padding: 0.15rem 0.35rem;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+}
+@keyframes damageJolt {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-1px, 1px); }
+  50% { transform: translate(1px, -1px); }
+  75% { transform: translate(-1px, 0); }
+  100% { transform: translate(0, 0); }
+}
 /* MySelfie */
 .selfie-camera { position: relative; border-radius: 1rem; overflow: hidden; background: #000; aspect-ratio: 4/3; }
 .selfie-camera video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
@@ -643,6 +966,26 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
 .karaoke-lyrics .word { display: inline-block; margin: 0 0.1em; transition: all 0.15s; opacity: 0.4; }
 .karaoke-lyrics .word.active { opacity: 1; color: var(--accent); transform: scale(1.15); font-weight: 700; }
 .karaoke-lyrics .word.past { opacity: 0.7; }
+.karaoke-chords {
+  border: 1px solid var(--border-light);
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+}
+.karaoke-chords .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+.karaoke-chord {
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border-light));
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
 .karaoke-audio-controls { display: flex; align-items: center; gap: 0.5rem; }
 .karaoke-audio-controls input[type="range"] { flex: 1; accent-color: var(--accent); }
 .karaoke-fullscreen { position: fixed; inset: 0; z-index: 100; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; }
@@ -665,19 +1008,25 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   <div class="glitter" style="left:67%;top:31%;animation-delay:1.6s;"></div>
   <div class="glitter" style="left:82%;top:18%;animation-delay:0.4s;"></div>
 </div>
+<div class="retro-bg" aria-hidden="true"></div>
+<div class="retro-badge" data-retro-badge>RETRO BIRTHDAY MODE</div>
 
 <div class="desktop-wrapper">
   <div class="desktop-story">
-    <div class="eyebrow">19. JÚNÍ 2026 &mdash; REYKJAVÍK</div>
-    <h1>Afmæli<br><span class="highlight">Omar 50</span></h1>
-    <p>
-      Farsímafyrst partýskipulag. Sveipið í símunarammanum til hægri
-      til að skoða boðssvör, spurningaleik, selfie-klefa, karaoke og fleira.
-    </p>
-    <div style="margin-top:2rem; display:flex; gap:0.75rem; opacity:0; animation: fadeUp 0.6s ease forwards 0.8s;">
-      <span style="font-family:var(--font-mono); font-size:0.7rem; padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary);">RSVP</span>
-      <span style="font-family:var(--font-mono); font-size:0.7rem; padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary);">QUIZ</span>
-      <span style="font-family:var(--font-mono); font-size:0.7rem; padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary);">KARAOKE</span>
+    <div class="gift-pack">
+      <div class="gift-lid"></div>
+      <div class="invite-card">
+        <div class="eyebrow">BOÐSKORT • 19. JÚNÍ 2026 • REYKJAVÍK</div>
+        <h1>Afmæli<br><span class="highlight">Omar 50</span></h1>
+        <p>
+          Gjafapakki með boði: opnaðu pakkann og síminn birtist með öllu flowi
+          fyrir RSVP, quiz, selfie og karaoke.
+        </p>
+        <div class="gift-actions">
+          <button class="btn primary" data-open-gift>Opna pakkann</button>
+          <span style="font-family:var(--font-mono); font-size:0.68rem; padding:0.38rem 0.7rem; border:1px solid var(--border); border-radius:999px; color:var(--text-secondary);">INVITE + GIFT</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -687,7 +1036,43 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
     </div>
   </div>
 
-  <div class="desktop-right"></div>
+  <aside class="desktop-right" aria-label="Desktop Admin Panel">
+    <div class="desktop-admin-head">
+      <div class="section-label">DESKTOP ADMIN MODE</div>
+      <div class="desktop-admin-title">Afmælisstjórnborð</div>
+      <div class="desktop-admin-sub">Símaparsari vinstra megin • stjórn og yfirsýn hægra megin.</div>
+    </div>
+    <div class="desktop-admin-body">
+      <div class="desktop-admin-row">
+        <input type="password" data-desktop-admin-pass placeholder="Admin lykilorð (valfrjálst)">
+        <button class="btn primary" data-desktop-admin-action="login">Virkja admin</button>
+      </div>
+      <div class="desktop-admin-grid">
+        <button class="btn" data-desktop-admin-action="host">Opna host svæði</button>
+        <button class="btn" data-desktop-admin-action="photos">Opna myndavegg</button>
+        <button class="btn" data-desktop-admin-action="refresh">Uppfæra yfirlit</button>
+        <button class="btn" data-desktop-admin-action="eventloop">Ræsa event loop</button>
+      </div>
+      <div class="desktop-admin-grid">
+        <div class="desktop-admin-kpi">
+          <div class="k">Já svör</div>
+          <div class="v" data-yes-count>0</div>
+        </div>
+        <div class="desktop-admin-kpi">
+          <div class="k">Nei svör</div>
+          <div class="v" data-no-count>0</div>
+        </div>
+      </div>
+      <div class="card" style="padding:0.75rem;">
+        <div style="font-size:0.8rem; color:var(--text-secondary);" data-desktop-admin-status>
+          Desktop admin mode tilbúið. Virkjaðu aðgang til að kalla á vernduð admin endpoint.
+        </div>
+      </div>
+      <div class="card desktop-admin-log" style="padding:0.75rem;" data-desktop-admin-log>
+        Live log bíður...
+      </div>
+    </div>
+  </aside>
 </div>
 
 <div class="phone-content-mobile" id="appContent">
@@ -702,10 +1087,25 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       <img class="hero-photo" src="/omar-birthday.jpg" alt="Birthday person photo" />
       <div class="hero-title-row">
         <div>
-          <div style="font-weight:700; font-size:1.1rem;">Omar verður</div>
-          <div class="muted" style="font-size:0.82rem; margin-top:0.1rem;">19. júní 2026</div>
+          <div style="font-weight:700; font-size:1.1rem;">Omar verður 50</div>
+          <div class="muted" style="font-size:0.82rem; margin-top:0.1rem;">19. júní 2026 • Reykjavík</div>
         </div>
         <div class="hero-age">50</div>
+      </div>
+    </div>
+    <div class="hero-subline">Vissir þú? Árgangur 1976, feril-snúningur 1999 og engin bakfærsla á partýdegi.</div>
+    <div class="widget-grid">
+      <div class="widget-pill">
+        <div class="label">Staðreynd</div>
+        <div class="value">6 kaflar</div>
+      </div>
+      <div class="widget-pill">
+        <div class="label">Spurningar</div>
+        <div class="value">100+</div>
+      </div>
+      <div class="widget-pill">
+        <div class="label">Mode</div>
+        <div class="value">Party Live</div>
       </div>
     </div>
     <div class="countdown-grid" data-countdown>
@@ -742,12 +1142,23 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
         <div class="countdown-label">sek</div>
       </div>
     </div>
+    <div class="hero-actions">
+      <button class="btn primary" data-jump="sec-rsvp">Svara boði</button>
+      <button class="btn" data-jump="sec-quiz">Spurningaleikur</button>
+      <button class="btn" data-jump="sec-photo">Myndaveggur</button>
+      <button class="btn" data-jump="sec-selfie">Selfie-bás</button>
+    </div>
   </section>
 
-  <section style="padding: 0 1rem 1rem;">
-    <div class="section-label" data-i18n="party_sections">PARTÝHLUTAR</div>
+  <section class="zone">
+    <div class="zone-shell">
+      <div class="zone-head">
+        <div class="section-label" data-i18n="party_sections">PARTÝHLUTAR</div>
+        <div class="zone-title">Aðkoma og skipulag</div>
+        <div class="zone-copy">Allar grunnupplýsingar á einum stað, síðan dýpri svæði neðar á síðunni.</div>
+      </div>
 
-    <div id="sec-rsvp" class="card expand-card animate-on-scroll open" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div id="sec-rsvp" class="card stack-card expand-card animate-on-scroll open" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;" data-i18n="rsvp_title">Svara boði + innskráning</div>
@@ -771,7 +1182,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div id="sec-links" class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div id="sec-links" class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Tenglar, leiðir og verkefnalisti</div>
@@ -801,7 +1212,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Fljótlegar staðreyndir</div>
@@ -824,6 +1235,28 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
           </div>
           <div class="fact-meta" data-fact-meta>Smelltu á spjaldið til að sjá næstu staðreynd • 1/6</div>
           <div class="muted" style="font-size:0.74rem; margin-top:0.35rem;">Snýst í gegnum staðreyndir um afmælisbarnið við hvern smell.</div>
+          <div class="truth-grid">
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+              <div class="flip-inner">
+                <div class="flip-face front">
+                  <small class="muted">Vissir þú?</small>
+                  <div style="font-size:0.95rem; font-weight:700;">1999</div>
+                  <div style="font-size:0.75rem;" class="muted">Ferill tekur beygju</div>
+                </div>
+                <div class="flip-face back">Sannleikur: Eitt símtal frá Tölvun setti nýjan kafla í gang.</div>
+              </div>
+            </div>
+            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+              <div class="flip-inner">
+                <div class="flip-face front">
+                  <small class="muted">Vissir þú?</small>
+                  <div style="font-size:0.95rem; font-weight:700;">Budapest</div>
+                  <div style="font-size:0.75rem;" class="muted">Goðsagnahamur</div>
+                </div>
+                <div class="flip-face back">Sannleikur: 40 bjórar, 4 dagar og samt minni fyrir allar sögurnar.</div>
+              </div>
+            </div>
+          </div>
           <div class="flip-grid" style="margin-top:0.55rem;">
             <div class="card" style="padding:0.55rem 0.7rem;">
               <div style="font-size:0.72rem; color:var(--text-muted);">Fjöldi staðreynda</div>
@@ -838,7 +1271,12 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div id="sec-quiz" class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div class="zone-head">
+      <div class="zone-title">Leikir og gjafasvæði</div>
+      <div class="zone-copy">Gagnvirk upplifun fyrir gesti með sannleikaspjöldum, óskalista og quiz.</div>
+    </div>
+
+    <div id="sec-quiz" class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Óskalisti gjafa</div>
@@ -890,7 +1328,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Omar 50 spurningaleikur</div>
@@ -919,7 +1357,12 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div id="sec-hosting" class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div class="zone-head">
+      <div class="zone-title">Miðlun og hýsing</div>
+      <div class="zone-copy">Slóð, myllumerki, myndaveggur og skipulagstól fyrir þátttakendur.</div>
+    </div>
+
+    <div id="sec-hosting" class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Hýsislóð + myllumerki</div>
@@ -938,7 +1381,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div id="sec-photo" class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div id="sec-photo" class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Myndaveggur</div>
@@ -958,7 +1401,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div id="sec-planner" class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div id="sec-planner" class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Partýskipulag / óvænt umsókn</div>
@@ -984,7 +1427,12 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
       </div>
     </div>
 
-    <div id="sec-host" class="card expand-card animate-on-scroll" onclick="this.classList.toggle('open')" style="margin-bottom: 0.75rem;">
+    <div class="zone-head">
+      <div class="zone-title">Gestgjafastjórnun</div>
+      <div class="zone-copy">Lokað svæði fyrir yfirsýn, þemu og ræsingu á event loop.</div>
+    </div>
+
+    <div id="sec-host" class="card stack-card expand-card animate-on-scroll" onclick="this.classList.toggle('open')">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <div style="font-weight: 600;">Stjórnborð gestgjafa</div>
@@ -1012,9 +1460,10 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
         </div>
       </div>
     </div>
+    </div>
   </section>
 
-  <section style="padding: 0 1rem 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+  <section class="zone-metrics">
     <div class="kpi">
       <div class="kpi-label">Viðburðardagur</div>
       <div class="kpi-value" style="color: var(--accent);">19 JUN</div>
@@ -1034,8 +1483,12 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   </section>
 
   <!-- MySelfie Section -->
-  <section id="sec-selfie" style="padding: 0 1rem 1rem;">
-    <div class="card" style="margin-bottom: 0.75rem;">
+  <section id="sec-selfie" class="zone">
+    <div class="zone-head">
+      <div class="zone-title">Selfie Studio</div>
+      <div class="zone-copy">Skjótt capture flow með gallery, caption og niðurhali.</div>
+    </div>
+    <div class="card stack-card">
       <div style="font-weight: 600; margin-bottom: 0.5rem;">Selfie-bás</div>
       <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Taktu selfie með gestum — áður og eftir veisluna!</div>
       <div class="selfie-camera" data-selfie-camera>
@@ -1063,8 +1516,12 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
   </section>
 
   <!-- MyKaraoke Section -->
-  <section id="sec-karaoke" style="padding: 0 1rem 1rem;">
-    <div class="card" style="margin-bottom: 0.75rem;">
+  <section id="sec-karaoke" class="zone">
+    <div class="zone-head">
+      <div class="zone-title">Karaoke Stage</div>
+      <div class="zone-copy">Upload, texta-umritun, sync texti og fullscreen hamur.</div>
+    </div>
+    <div class="card stack-card">
       <div style="font-weight: 600; margin-bottom: 0.5rem;">Karaoke</div>
       <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Hladdu upp lagi, gervigreindin umritar textann og þú syngur karaoke!</div>
       <div data-karaoke-view="upload">
@@ -1091,6 +1548,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
           <button class="btn" data-karaoke-action="back-to-list" style="font-size: 0.8rem;">Til baka</button>
         </div>
         <div class="karaoke-lyrics" data-karaoke-lyrics></div>
+        <div class="karaoke-chords" data-karaoke-chords></div>
         <div class="karaoke-audio-controls">
           <button class="btn" data-karaoke-action="play" style="min-width: 44px;">&#9654;</button>
           <input type="range" data-karaoke-seek min="0" max="100" value="0">
@@ -1103,6 +1561,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
     <div class="karaoke-fullscreen" data-karaoke-fullscreen>
       <button class="close-fs" data-karaoke-fullscreen-close>&times;</button>
       <div class="karaoke-lyrics" data-karaoke-fs-lyrics></div>
+      <div class="karaoke-chords" data-karaoke-fs-chords style="width:min(90vw,900px); margin-top:0.75rem;"></div>
       <div class="karaoke-audio-controls" style="position: absolute; bottom: 2rem; width: 80%;">
         <button class="btn" data-karaoke-fs-play style="min-width: 44px; color: #fff;">&#9654;</button>
         <input type="range" data-karaoke-fs-seek min="0" max="100" value="0">
@@ -1230,6 +1689,8 @@ function initInteractions(root) {
   const karaokeFullscreen = root.querySelector('[data-karaoke-fullscreen]');
   const karaokeFsClose = root.querySelector('[data-karaoke-fullscreen-close]');
   const karaokeFsLyrics = root.querySelector('[data-karaoke-fs-lyrics]');
+  const karaokeChords = root.querySelector('[data-karaoke-chords]');
+  const karaokeFsChords = root.querySelector('[data-karaoke-fs-chords]');
   const karaokeFsPlay = root.querySelector('[data-karaoke-fs-play]');
   const karaokeFsSeek = root.querySelector('[data-karaoke-fs-seek]');
   const karaokeFsTime = root.querySelector('[data-karaoke-fs-time]');
@@ -1361,6 +1822,171 @@ function initInteractions(root) {
       }
     });
   });
+
+  function startDynamiteChaos() {
+    if (window.__partyChaosStarted) return;
+    window.__partyChaosStarted = true;
+    const balloons = Array.from(document.querySelectorAll('.party-layer .balloon'));
+    const chaosFeedback = root.querySelector('[data-nav-feedback]');
+    const confettiColors = ['#f5d77a', '#2fb36d', '#e05252', '#f472b6', '#60a5fa', '#ffffff'];
+    if (!balloons.length) return;
+
+    function burstConfetti(x, y, amount) {
+      for (let i = 0; i < amount; i++) {
+        const piece = document.createElement('span');
+        piece.className = 'confetti-piece';
+        piece.style.left = x + 'px';
+        piece.style.top = y + 'px';
+        piece.style.background = confettiColors[i % confettiColors.length];
+        piece.style.setProperty('--drift-x', ((Math.random() - 0.5) * 240).toFixed(1) + 'px');
+        piece.style.setProperty('--drift-y', (140 + Math.random() * 380).toFixed(1) + 'px');
+        piece.style.setProperty('--spin', ((Math.random() - 0.5) * 960).toFixed(0) + 'deg');
+        piece.style.animationDuration = (1.3 + Math.random() * 1.4).toFixed(2) + 's';
+        piece.style.opacity = (0.75 + Math.random() * 0.25).toFixed(2);
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 2900);
+      }
+    }
+
+    function triggerChaos() {
+      const balloon = balloons[Math.floor(Math.random() * balloons.length)];
+      if (!balloon) return;
+
+      balloon.classList.add('dynamite');
+      if (chaosFeedback) chaosFeedback.textContent = 'Dýnamít-kúla virkjuð...';
+
+      setTimeout(() => {
+        const rect = balloon.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const burst = document.createElement('span');
+        burst.className = 'balloon-burst';
+        burst.style.left = x + 'px';
+        burst.style.top = y + 'px';
+        document.body.appendChild(burst);
+        setTimeout(() => burst.remove(), 520);
+
+        burstConfetti(x, y, 120 + Math.floor(Math.random() * 90));
+        balloon.classList.add('pop');
+
+        const candidates = Array.from(root.querySelectorAll('.card, .kpi, .hero, .nav-chip'))
+          .filter((el) => !el.classList.contains('damage-glitch'));
+        const victim = candidates[Math.floor(Math.random() * candidates.length)];
+        if (victim) victim.classList.add('damage-glitch');
+        if (chaosFeedback) chaosFeedback.textContent = 'BOOM! Smá bilun... viðgerð í gangi.';
+
+        setTimeout(() => {
+          if (victim) victim.classList.remove('damage-glitch');
+          balloon.classList.remove('pop', 'dynamite');
+          if (chaosFeedback) chaosFeedback.textContent = 'Kerfi komið í lag.';
+        }, 2300);
+      }, 1200 + Math.random() * 900);
+    }
+
+    (function scheduleNext() {
+      const waitMs = 9000 + Math.random() * 14000;
+      setTimeout(() => {
+        triggerChaos();
+        scheduleNext();
+      }, waitMs);
+    })();
+  }
+  startDynamiteChaos();
+
+  function setupDesktopAdminPanel() {
+    if (!(window.innerWidth > 768 && root.id === 'phoneContent')) return;
+    const status = document.querySelector('[data-desktop-admin-status]');
+    const passInput = document.querySelector('[data-desktop-admin-pass]');
+    const loginBtn = document.querySelector('[data-desktop-admin-action="login"]');
+    const hostBtn = document.querySelector('[data-desktop-admin-action="host"]');
+    const photosBtn = document.querySelector('[data-desktop-admin-action="photos"]');
+    const refreshBtn = document.querySelector('[data-desktop-admin-action="refresh"]');
+    const eventLoopBtn = document.querySelector('[data-desktop-admin-action="eventloop"]');
+    const logEl = document.querySelector('[data-desktop-admin-log]');
+
+    function activateDesktopAdmin(pass) {
+      if (pass) quizState.adminPassword = pass;
+      if (!state.contact || !state.method) {
+        state.method = 'desktop';
+        state.contact = 'desktop-admin@myx.local';
+        state.name = 'Desktop Admin';
+      }
+      if (quizAdminAddBtn) quizAdminAddBtn.disabled = false;
+      if (quizAdminDeleteBtn) quizAdminDeleteBtn.disabled = false;
+      if (adminRefreshBtn) adminRefreshBtn.disabled = false;
+      if (adminStatus) adminStatus.textContent = 'Gestgjafahamur virkur (desktop mode).';
+      if (status) status.textContent = pass
+        ? 'Admin mode virkt með lykilorði. Endpoint stjórnun tilbúin.'
+        : 'Admin mode virkt. Settu lykilorð ef þú vilt kalla á vernduð endpoint.';
+    }
+
+    async function refreshDesktopAdminLog() {
+      if (!logEl) return;
+      try {
+        const statsRes = await fetch('/api/rsvp/stats');
+        const stats = await statsRes.json();
+        if (!statsRes.ok) throw new Error('stats');
+        const now = new Date().toLocaleTimeString('is-IS', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        let lines = [
+          '<b>Live ' + now + '</b>',
+          '<br>RSVP: ' + (stats.attendingYes ?? 0) + ' já • ' + (stats.attendingNo ?? 0) + ' nei',
+        ];
+        if (quizState.adminPassword) {
+          const overviewRes = await fetch('/api/admin/overview?slug=' + encodeURIComponent(currentSlug), {
+            headers: { 'x-admin-password': quizState.adminPassword }
+          });
+          const overview = await overviewRes.json();
+          if (overviewRes.ok) {
+            const recent = (overview.quiz?.recentAnswers || []).slice(0, 4).map((x) =>
+              (x.playerName || 'Gestur') + ' Q' + x.questionId + ' ' + (x.correct ? '✅' : '❌')
+            );
+            lines = lines.concat([
+              '<br>Quiz svör: ' + (overview.quiz?.totalAnswers ?? 0),
+              '<br>Planner: ' + (overview.planner?.total ?? 0),
+              '<br>Nýlegt: ' + (recent.length ? recent.join(' • ') : 'ekkert enn'),
+            ]);
+          }
+        } else {
+          lines.push('<br><span class="muted">Settu admin lykilorð til að sjá djúpari logs.</span>');
+        }
+        logEl.innerHTML = lines.join('');
+      } catch {
+        logEl.textContent = 'Live log villa. Reyni aftur...';
+      }
+    }
+
+    activateDesktopAdmin('');
+    refreshDesktopAdminLog();
+    setInterval(refreshDesktopAdminLog, 15000);
+
+    if (loginBtn) loginBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const pass = passInput && passInput.value ? passInput.value.trim() : '';
+      activateDesktopAdmin(pass);
+      if (pass) refreshAdminOverview();
+      refreshDesktopAdminLog();
+    });
+    if (hostBtn) hostBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const btn = root.querySelector('[data-jump="sec-host"]');
+      if (btn) btn.click();
+    });
+    if (photosBtn) photosBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const btn = root.querySelector('[data-jump="sec-photo"]');
+      if (btn) btn.click();
+    });
+    if (refreshBtn) refreshBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      refreshAdminOverview();
+      refreshDesktopAdminLog();
+    });
+    if (eventLoopBtn) eventLoopBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      startMyEventLoop();
+    });
+  }
+  setupDesktopAdminPanel();
 
   if (currentSlugLabel) currentSlugLabel.textContent = currentSlug;
 
@@ -1674,7 +2300,7 @@ function initInteractions(root) {
   }
 
   async function startMyEventLoop(ev) {
-    ev.stopPropagation();
+    if (ev) ev.stopPropagation();
     if (!eventLoopStatus) return;
     if (!state.contact || !state.method) {
       eventLoopStatus.textContent = 'Skráðu þig inn fyrst til að stofna eigið viðburðarforrit.';
@@ -1940,6 +2566,20 @@ function initInteractions(root) {
   let karaokeLyricsData = [];
   let karaokeAnimFrame = null;
 
+  function renderKaraokeChords(song) {
+    const blocks = [karaokeChords, karaokeFsChords].filter(Boolean);
+    blocks.forEach((container) => {
+      if (!song || !Array.isArray(song.chords) || !song.chords.length) {
+        container.innerHTML = '<div class="muted" style="font-size:0.78rem;">Engin gítargrip skráð fyrir þetta lag.</div>';
+        return;
+      }
+      container.innerHTML = [
+        '<div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Gítargrip</div>',
+        '<div class="row">' + song.chords.map((ch) => '<span class="karaoke-chord">' + ch + '</span>').join('') + '</div>'
+      ].join('');
+    });
+  }
+
   if (karaokeFile) karaokeFile.addEventListener('change', (ev) => {
     ev.stopPropagation();
     const file = karaokeFile.files[0];
@@ -2018,10 +2658,6 @@ function initInteractions(root) {
       const data = await res.json();
       if (!res.ok) return;
       const songs = data.songs || [];
-      if (!songs.length) {
-        karaokeSongList.innerHTML = '<div class="muted" style="text-align:center;">Engin lög enn — hladdu upp fyrsta laginu!</div>';
-        return;
-      }
       karaokeSongList.innerHTML = songs.map(s =>
         '<div class="karaoke-song-item" data-song-id="' + s.id + '">' +
           '<div class="song-info"><div class="song-title">' + s.title + '</div>' +
@@ -2042,23 +2678,36 @@ function initInteractions(root) {
   async function openKaraokePlayer(songId) {
     if (!karaokePlayerView || !karaokeAudio) return;
     try {
-      const [metaRes, audioRes] = await Promise.all([
-        fetch('/api/karaoke/song?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId),
-        fetch('/api/karaoke/audio?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId)
-      ]);
+      const metaRes = await fetch('/api/karaoke/song?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId);
       const meta = await metaRes.json();
-      const audio = await audioRes.json();
-      if (!metaRes.ok || !audioRes.ok) return;
+      if (!metaRes.ok) return;
       karaokeCurrentSong = meta;
       karaokeLyricsData = meta.lyrics || [];
       if (karaokeNowTitle) karaokeNowTitle.textContent = meta.title;
       if (karaokeNowArtist) karaokeNowArtist.textContent = meta.artist || meta.addedBy || '';
-      // Set audio source
-      karaokeAudio.src = audio.audioBase64;
-      karaokeAudio.load();
+      // Set audio source when available
+      karaokeAudio.pause();
+      if (meta.hasAudio) {
+        const audioRes = await fetch('/api/karaoke/audio?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId);
+        const audio = await audioRes.json();
+        if (!audioRes.ok) return;
+        karaokeAudio.src = audio.audioBase64;
+        karaokeAudio.load();
+        if (karaokePlayBtn) karaokePlayBtn.disabled = false;
+        if (karaokeFsPlay) karaokeFsPlay.disabled = false;
+      } else {
+        karaokeAudio.src = '';
+        karaokeAudio.load();
+        if (karaokePlayBtn) karaokePlayBtn.disabled = true;
+        if (karaokeFsPlay) karaokeFsPlay.disabled = true;
+        if (karaokeStatus) karaokeStatus.textContent = 'Þetta lag er texti+grip (engin hljóðskrá tengd).';
+      }
+      if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
+      if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
       // Render lyrics
       renderKaraokeLyrics(karaokeLyrics, karaokeLyricsData, meta.manualLyrics);
       if (karaokeFsLyrics) renderKaraokeLyrics(karaokeFsLyrics, karaokeLyricsData, meta.manualLyrics);
+      renderKaraokeChords(meta);
       // Show player
       karaokePlayerView.classList.add('active');
       if (karaokeUploadView) karaokeUploadView.style.display = 'none';
@@ -2123,6 +2772,7 @@ function initInteractions(root) {
 
   function toggleKaraokePlay() {
     if (!karaokeAudio) return;
+    if (!karaokeAudio.src) return;
     if (karaokeAudio.paused) {
       karaokeAudio.play();
       if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#10074;&#10074;';
@@ -2154,6 +2804,9 @@ function initInteractions(root) {
     if (karaokePlayerView) karaokePlayerView.classList.remove('active');
     if (karaokeUploadView) karaokeUploadView.style.display = '';
     if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
+    if (karaokePlayBtn) karaokePlayBtn.disabled = false;
+    if (karaokeFsPlay) karaokeFsPlay.disabled = false;
+    renderKaraokeChords(null);
     loadKaraokeSongs();
   });
 
@@ -2171,6 +2824,7 @@ function initInteractions(root) {
     if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
   });
 
+  renderKaraokeChords(null);
   loadKaraokeSongs();
 
   refreshStats();
@@ -2296,6 +2950,22 @@ function startCountdown() {
 
 initThemeSelector();
 
+function initDesktopGiftReveal() {
+  if (window.innerWidth <= 768) return;
+  const wrapper = document.querySelector('.desktop-wrapper');
+  if (!wrapper) return;
+  const openBtn = document.querySelector('[data-open-gift]');
+  const openGift = () => wrapper.classList.add('gift-open');
+  if (openBtn) {
+    openBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      openGift();
+    });
+  }
+  setTimeout(openGift, 1400);
+}
+initDesktopGiftReveal();
+
 if (window.innerWidth > 768) {
   const src = document.getElementById('appContent');
   const dest = document.getElementById('phoneContent');
@@ -2308,6 +2978,24 @@ if (window.innerWidth > 768) {
   initInteractions(document.getElementById('appContent'));
 }
 startCountdown();
+
+function initRetroBackground() {
+  const bg = document.querySelector('.retro-bg');
+  const badge = document.querySelector('[data-retro-badge]');
+  if (!bg) return;
+  bg.innerHTML = '';
+  const total = window.innerWidth > 768 ? 42 : 28;
+  for (let i = 0; i < total; i++) {
+    const sprite = document.createElement('span');
+    sprite.className = 'retro-sprite ' + (i % 3 === 0 ? 'star' : 'coin');
+    sprite.style.left = (Math.random() * 100).toFixed(2) + '%';
+    sprite.style.animationDuration = (8 + Math.random() * 12).toFixed(2) + 's';
+    sprite.style.animationDelay = (-Math.random() * 12).toFixed(2) + 's';
+    bg.appendChild(sprite);
+  }
+  if (badge) badge.textContent = 'HANN Á AFMÆLI Í DAG • RETRO MODE';
+}
+initRetroBackground();
 
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {

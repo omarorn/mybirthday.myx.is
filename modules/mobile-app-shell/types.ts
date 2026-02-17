@@ -115,6 +115,8 @@ export interface KaraokeSong {
   audioKey: string;
   lyrics?: TranscriptSegment[];
   manualLyrics?: string;
+  chords?: string[];
+  preset?: boolean;
   duration?: number;
   addedBy: string;
   createdAt: string;
