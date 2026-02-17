@@ -8,7 +8,7 @@ Repository guidance for coding agents.
 - Runtime: Cloudflare Workers, raw `fetch` router
 - Entry point: `modules/mobile-app-shell/worker.ts`
 - Frontend: single SPA in `modules/mobile-app-shell/index.html`
-- Data: KV namespace `QUIZ_DATA` plus in-memory maps
+- Data: D1 database (primary), R2 bucket (media), KV namespace `QUIZ_DATA` (legacy/metadata)
 - Canonical Wrangler config: `wrangler.toml`
 
 ## Current Commands
