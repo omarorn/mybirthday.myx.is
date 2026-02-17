@@ -1,32 +1,22 @@
-# Task completion checklist
+# mybirthday.myx.is — Task Completion Checklist
 
-Use this checklist after making changes.
+## Before Committing Any Change
+1. ✅ `npm run typecheck` — no new errors (NOTE: only checks src/, not modules/)
+2. ⚠️ No test command available
+3. ⚠️ No lint command available  
+4. ⚠️ No build command available
+5. ✅ Manual verification: `npx wrangler dev` → test affected endpoints
 
-## 1) Scope and correctness
-- Confirm changed files are limited to intended scope.
-- Validate critical paths manually (especially auth/tenant-sensitive routes).
+## Before Deploying
+1. ✅ `npm run typecheck`
+2. ✅ Test locally with `npm run dev`
+3. ✅ Check KV data won't be lost (in-memory Maps reset on deploy)
+4. ✅ `npm run deploy`
+5. ✅ Verify: `curl https://mybirthday.myx.is/health`
 
-## 2) Run package-appropriate checks
-- If root app code changed:
-  - `npm run lint`
-  - `npm run type-check`
-  - `npm run build` (when build-impacting)
-- If `frontend/` changed:
-  - `cd frontend && npm run lint`
-  - `cd frontend && npm run build` (or at minimum ensure type safety during build)
-  - Run targeted Playwright tests for impacted area when available.
-- If `backend/` changed:
-  - `cd backend && npm run lint`
-  - `cd backend && npm run build`
-  - `cd backend && npm test` (if relevant)
-- If `database/` changed:
-  - `cd database && npm run build`
-  - relevant Prisma/migration command(s) as needed (`db:migrate`, `db:verify`).
-
-## 3) Data and migration safety
-- For schema/migration changes, document migration order and local/remote implications.
-- Ensure tenant isolation assumptions remain intact for multi-tenant data access.
-
-## 4) Final sanity
-- `git status` and `git diff` review for unintended edits.
-- Summarize what changed, validation performed, and any remaining risks or follow-ups.
+## Missing (Should Be Added)
+- [ ] Extend tsconfig to include modules/
+- [ ] Add lint script (eslint or biome)
+- [ ] Add test framework (vitest)
+- [ ] Add build script
+- [ ] Add pre-commit hooks
