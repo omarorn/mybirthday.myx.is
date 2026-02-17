@@ -4,6 +4,8 @@ Last updated: 2026-02-17
 
 Base URL (prod): `https://mybirthday.myx.is`
 
+Machine-readable spec: `docs/openapi.json`
+
 ## Conventions
 
 - JSON endpoints expect `Content-Type: application/json` for `POST`.

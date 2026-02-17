@@ -1,0 +1,902 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "mybirthday.myx.is API",
+    "version": "2026-02-17",
+    "description": "Compact OpenAPI spec for the Cloudflare Worker endpoints."
+  },
+  "servers": [
+    {
+      "url": "https://mybirthday.myx.is"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "AdminPassword": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-admin-password"
+      },
+      "OwnerId": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-owner-id"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["error"]
+      },
+      "RsvpRequest": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["sms", "google"]
+          },
+          "contact": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "attending": {
+            "type": "boolean"
+          },
+          "partySize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "plusOne": {
+            "type": "string"
+          },
+          "dietary": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": ["method", "contact", "attending"]
+      },
+      "QuizAnswerRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "choice": {
+            "type": "integer"
+          },
+          "playerId": {
+            "type": "string"
+          },
+          "playerName": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "choice"]
+      },
+      "EventCreateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "published": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PhotoWallItemRequest": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": ["imageUrl"]
+      },
+      "PlannerApplyRequest": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["host_add", "surprise_help"]
+          },
+          "applicantName": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "forGuest": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": ["type", "applicantName", "contact", "note"]
+      },
+      "HostingSignupRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "hashtag": {
+            "type": "string"
+          },
+          "instagramHandle": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/rsvp": {
+      "post": {
+        "summary": "Submit RSVP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RsvpRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "RSVP accepted"
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rsvp/stats": {
+      "get": {
+        "summary": "Get RSVP stats",
+        "responses": {
+          "200": {
+            "description": "Stats payload"
+          }
+        }
+      }
+    },
+    "/api/quiz/questions": {
+      "get": {
+        "summary": "Get quiz questions",
+        "responses": {
+          "200": {
+            "description": "Question list"
+          }
+        }
+      }
+    },
+    "/api/quiz/question": {
+      "get": {
+        "summary": "Get single quiz question",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Question payload"
+          },
+          "404": {
+            "description": "Question not found"
+          }
+        }
+      }
+    },
+    "/api/quiz/answer": {
+      "post": {
+        "summary": "Submit quiz answer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizAnswerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Answer result + gamification data"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "404": {
+            "description": "Question not found"
+          }
+        }
+      }
+    },
+    "/api/quiz/leaderboard": {
+      "get": {
+        "summary": "Get quiz leaderboard",
+        "responses": {
+          "200": {
+            "description": "Leaderboard payload"
+          }
+        }
+      }
+    },
+    "/api/quiz/player": {
+      "get": {
+        "summary": "Get player stats",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Player stats payload"
+          }
+        }
+      }
+    },
+    "/api/quiz/admin/question": {
+      "post": {
+        "summary": "Add custom quiz question (admin)",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Question created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete custom quiz question (admin)",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/events/create": {
+      "post": {
+        "summary": "Create event",
+        "security": [
+          {
+            "OwnerId": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event created"
+          },
+          "401": {
+            "description": "Missing owner id"
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/clone": {
+      "post": {
+        "summary": "Clone event",
+        "security": [
+          {
+            "OwnerId": []
+          },
+          {
+            "AdminPassword": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Clone created"
+          }
+        }
+      }
+    },
+    "/api/events/{slug}/public": {
+      "get": {
+        "summary": "Get public event",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public event payload"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/dashboard/me": {
+      "get": {
+        "summary": "Owner dashboard",
+        "security": [
+          {
+            "OwnerId": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard payload"
+          }
+        }
+      }
+    },
+    "/api/hosting/signup": {
+      "post": {
+        "summary": "Create tenant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HostingSignupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tenant created"
+          }
+        }
+      }
+    },
+    "/api/hosting/tenant": {
+      "get": {
+        "summary": "Get tenant config",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant payload"
+          },
+          "404": {
+            "description": "Tenant not found"
+          }
+        }
+      }
+    },
+    "/api/photowall": {
+      "get": {
+        "summary": "Get photo wall",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Photo wall payload"
+          }
+        }
+      }
+    },
+    "/api/photowall/item": {
+      "post": {
+        "summary": "Add photo wall item (admin)",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoWallItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete photo wall item (admin)",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/api/planner/apply": {
+      "post": {
+        "summary": "Submit planner application",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlannerApplyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application created"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/planner/applications": {
+      "get": {
+        "summary": "Get planner applications (admin)",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Applications payload"
+          }
+        }
+      }
+    },
+    "/api/selfie/list": {
+      "get": {
+        "summary": "List selfies",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Selfie list"
+          }
+        }
+      }
+    },
+    "/api/selfie/capture": {
+      "post": {
+        "summary": "Capture selfie",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Selfie added"
+          }
+        }
+      }
+    },
+    "/api/selfie/item": {
+      "delete": {
+        "summary": "Delete selfie (admin)",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/api/karaoke/songs": {
+      "get": {
+        "summary": "List karaoke songs",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Song list"
+          }
+        }
+      }
+    },
+    "/api/karaoke/song": {
+      "get": {
+        "summary": "Get karaoke song details",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Song details"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete karaoke song (admin)",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/api/karaoke/audio": {
+      "get": {
+        "summary": "Get karaoke audio payload",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audio payload"
+          }
+        }
+      }
+    },
+    "/api/karaoke/upload": {
+      "post": {
+        "summary": "Upload karaoke track",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Song uploaded"
+          }
+        }
+      }
+    },
+    "/api/karaoke/transcribe": {
+      "post": {
+        "summary": "Run karaoke transcription",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcription complete"
+          },
+          "500": {
+            "description": "AI/transcription error"
+          }
+        }
+      }
+    },
+    "/api/karaoke/lyrics": {
+      "post": {
+        "summary": "Save manual karaoke lyrics",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lyrics saved"
+          }
+        }
+      }
+    },
+    "/api/admin/overview": {
+      "get": {
+        "summary": "Admin overview dashboard",
+        "security": [
+          {
+            "AdminPassword": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Overview payload"
+          }
+        }
+      }
+    }
+  }
+}

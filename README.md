@@ -48,3 +48,4 @@ Cloudflare Worker app for Omar's birthday portal (RSVP, quiz, events, media).
 ## Docs
 
 - Detailed endpoint docs: `docs/api.md`
+- OpenAPI spec (compact): `docs/openapi.json`

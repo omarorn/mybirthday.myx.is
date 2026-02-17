@@ -26,6 +26,9 @@ Last updated: 2026-02-17
    - `/api/photowall/item` (auth failure + success)
    - `/api/planner/apply` (required fields + success)
    - `/api/hosting/signup` (invalid input + success)
+8. Added API documentation artifacts:
+   - human-readable reference: `docs/api.md`
+   - machine-readable spec: `docs/openapi.json`
 
 ## Current Priorities
 
@@ -35,6 +38,7 @@ Last updated: 2026-02-17
    - RSVP submit
    - Quiz answer submit
    - Event creation from dashboard context
+3. Keep OpenAPI spec in sync with `worker.ts` as routes evolve.
 
 ## Next Technical Upgrades
 
