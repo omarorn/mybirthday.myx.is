@@ -20,6 +20,7 @@ npm run lint
 npm run validate:openapi
 npm run typecheck
 npm run test
+npm run seed:test-user
 npm run deploy
 ```
 

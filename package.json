@@ -11,11 +11,13 @@
     "generate:openapi": "node scripts/generate-openapi.js",
     "check:openapi-sync": "npm run generate:openapi && git diff --exit-code -- docs/openapi.json",
     "validate:openapi": "node scripts/validate-openapi.js",
+    "seed:test-user": "node scripts/seed-boklifsins-test-user.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@playwright/test": "^1.58.2",
     "eslint": "^9.20.0",
     "globals": "^15.15.0",
     "typescript": "^5.9.2",

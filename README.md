@@ -34,7 +34,10 @@ Cloudflare Worker app for Omar's birthday portal (RSVP, quiz, events, media).
 - `npm run validate:openapi`: validates `docs/openapi.json`
 - `npm run typecheck`: TypeScript checks
 - `npm run test`: Vitest tests
+- `npm run seed:test-user`: seeds an extensive Bók Lífsins-based test user flow + 100 quiz questions
 - `npm run deploy`: deploy Worker
+
+`seed:test-user` targets `SEED_BASE_URL` (default: `http://127.0.0.1:8787`).
 
 ## API Surface (high level)
 
