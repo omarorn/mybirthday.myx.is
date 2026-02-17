@@ -1,6 +1,6 @@
 # TODO — mybirthday.myx.is
 
-Last updated: 2026-02-17
+Last updated: 2026-02-17 (post-deploy sync)
 
 ## Done This Week
 
@@ -39,6 +39,13 @@ Last updated: 2026-02-17
       - `npm run generate:openapi`
       - `npm run check:openapi-sync`
     - CI now fails when `docs/openapi.json` is out of sync with routes in `worker.ts`.
+11. Deployed latest Worker update to production:
+    - Worker: `mybirthday-myx-is`
+    - Version: `5f7cb116-d76e-4ee6-8c0a-9d89e633a106`
+12. Added and executed Bók Lífsins power seeder:
+    - script: `scripts/seed-boklifsins-test-user.js`
+    - creates cross-feature test user data + 100 custom quiz questions
+    - last run summary: `quizQuestionsCreated=100`, `failures=[]`
 
 ## Current Priorities
 
