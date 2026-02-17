@@ -1,10 +1,11 @@
 /**
- * MyKaraoke route handlers and persistence.
+ * MyKaraoke route handlers — D1 metadata + R2 audio storage.
  */
 
 import type { Env, KaraokeSong, TranscriptSegment } from "../types";
 import { json, slugify, isAdmin } from "../helpers";
-import { memoryKaraokeSongs, memoryKaraokeAudio } from "../state";
+
+// ── VTT helpers ─────────────────────────────────────────────────
 
 function toVttTimestamp(seconds: number): string {
   const safe = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
@@ -26,6 +27,8 @@ function segmentsToVtt(segments: TranscriptSegment[]): string {
   }
   return lines.join("\n");
 }
+
+// ── Presets ──────────────────────────────────────────────────────
 
 function presetKaraokeSongs(): KaraokeSong[] {
   const presetText = [
@@ -51,6 +54,27 @@ function presetKaraokeSongs(): KaraokeSong[] {
   ];
 }
 
+// ── Row mapping ─────────────────────────────────────────────────
+
+function rowToSong(row: Record<string, unknown>): KaraokeSong {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    artist: (row.artist as string) || "",
+    audioKey: (row.audio_key as string) || "",
+    lyrics: row.lyrics ? (JSON.parse(row.lyrics as string) as TranscriptSegment[]) : undefined,
+    manualLyrics: (row.manual_lyrics as string) || undefined,
+    transcription: (row.transcription as string) || undefined,
+    vtt: (row.vtt as string) || undefined,
+    duration: row.duration != null ? (row.duration as number) : undefined,
+    chords: row.chords ? (JSON.parse(row.chords as string) as string[]) : undefined,
+    preset: Boolean(row.preset),
+    addedBy: row.added_by as string,
+    createdAt: row.created_at as string,
+    status: (row.status as KaraokeSong["status"]) || "uploaded",
+  };
+}
+
 function mergeWithPresets(storedSongs: KaraokeSong[]): KaraokeSong[] {
   const presets = presetKaraokeSongs();
   const stored = storedSongs.filter(
@@ -59,28 +83,15 @@ function mergeWithPresets(storedSongs: KaraokeSong[]): KaraokeSong[] {
   return [...presets, ...stored];
 }
 
-// ── Persistence ──────────────────────────────────────────────────
+// ── Persistence (D1) ────────────────────────────────────────────
 
 async function loadKaraokeSongs(env: Env, slug: string): Promise<KaraokeSong[]> {
-  if (!env.QUIZ_DATA) return memoryKaraokeSongs.get(slug) ?? [];
-  const raw = await env.QUIZ_DATA.get(`karaoke:songs:${slug}`);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as KaraokeSong[];
-  } catch {
-    return [];
-  }
-}
-
-async function saveKaraokeSongs(
-  env: Env,
-  slug: string,
-  songs: KaraokeSong[],
-): Promise<void> {
-  memoryKaraokeSongs.set(slug, songs);
-  if (env.QUIZ_DATA) {
-    await env.QUIZ_DATA.put(`karaoke:songs:${slug}`, JSON.stringify(songs));
-  }
+  const result = await env.DB.prepare(
+    "SELECT * FROM karaoke_songs WHERE slug = ? ORDER BY created_at DESC LIMIT 200",
+  )
+    .bind(slug)
+    .all();
+  return (result.results ?? []).map(rowToSong);
 }
 
 // ── Route handler ────────────────────────────────────────────────
@@ -90,6 +101,7 @@ export async function handleKaraokeRoutes(
   url: URL,
   env: Env,
 ): Promise<Response | null> {
+  // ── GET songs list ──────────────────────────────────────────
   if (url.pathname === "/api/karaoke/songs" && request.method === "GET") {
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const songs = mergeWithPresets(await loadKaraokeSongs(env, slug));
@@ -107,6 +119,7 @@ export async function handleKaraokeRoutes(
     });
   }
 
+  // ── GET single song ─────────────────────────────────────────
   if (url.pathname === "/api/karaoke/song" && request.method === "GET") {
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const id = url.searchParams.get("id");
@@ -122,6 +135,7 @@ export async function handleKaraokeRoutes(
     return json(meta);
   }
 
+  // ── GET audio from R2 ───────────────────────────────────────
   if (url.pathname === "/api/karaoke/audio" && request.method === "GET") {
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const id = url.searchParams.get("id");
@@ -131,17 +145,15 @@ export async function handleKaraokeRoutes(
     if (!song) return json({ error: "Lag fannst ekki" }, 404);
     if (!song.audioKey) return json({ error: "Preset lag hefur enga hljóðskrá" }, 404);
 
-    const audioKey = `karaoke:audio:${slug}:${id}`;
-    let audioData: string | null = null;
-    if (env.QUIZ_DATA) {
-      audioData = await env.QUIZ_DATA.get(audioKey);
-    } else {
-      audioData = memoryKaraokeAudio.get(audioKey) ?? null;
-    }
-    if (!audioData) return json({ error: "Hljóðskrá fannst ekki" }, 404);
-    return json({ audioBase64: audioData });
+    const obj = await env.MEDIA_BUCKET.get(song.audioKey);
+    if (!obj) return json({ error: "Hljóðskrá fannst ekki" }, 404);
+
+    const bytes = await obj.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(bytes)));
+    return json({ audioBase64: base64 });
   }
 
+  // ── POST upload new song ────────────────────────────────────
   if (url.pathname === "/api/karaoke/upload" && request.method === "POST") {
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const body = (await request.json()) as {
@@ -158,12 +170,28 @@ export async function handleKaraokeRoutes(
     }
 
     const id = crypto.randomUUID();
-    const audioKey = `karaoke:audio:${slug}:${id}`;
-    if (env.QUIZ_DATA) {
-      await env.QUIZ_DATA.put(audioKey, body.audioBase64);
-    } else {
-      memoryKaraokeAudio.set(audioKey, body.audioBase64);
+    const audioKey = `karaoke/${slug}/${id}`;
+
+    // Decode base64 to binary and store in R2
+    const raw = body.audioBase64.includes(",")
+      ? body.audioBase64.split(",")[1]
+      : body.audioBase64;
+    const binaryString = atob(raw);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
     }
+    await env.MEDIA_BUCKET.put(audioKey, bytes, {
+      httpMetadata: { contentType: "audio/mpeg" },
+    });
+
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      `INSERT INTO karaoke_songs (id, slug, title, artist, audio_key, added_by, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'uploaded', ?)`,
+    )
+      .bind(id, slug, body.title, body.artist || "", audioKey, body.addedBy, now)
+      .run();
 
     const song: KaraokeSong = {
       id,
@@ -171,49 +199,56 @@ export async function handleKaraokeRoutes(
       artist: body.artist || "",
       audioKey,
       addedBy: body.addedBy,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
       status: "uploaded",
     };
-
-    const songs = await loadKaraokeSongs(env, slug);
-    songs.push(song);
-    await saveKaraokeSongs(env, slug, songs);
     return json({ success: true, song: { ...song, audioKey: undefined } }, 201);
   }
 
+  // ── POST transcribe via Workers AI ──────────────────────────
   if (url.pathname === "/api/karaoke/transcribe" && request.method === "POST") {
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const id = url.searchParams.get("id");
     if (!id) return json({ error: "id vantar" }, 400);
     if (!env.AI) return json({ error: "AI binding ekki stillt" }, 500);
 
-    const songs = await loadKaraokeSongs(env, slug);
-    const idx = songs.findIndex((s) => s.id === id);
-    if (idx === -1) return json({ error: "Lag fannst ekki" }, 404);
+    // Check song exists
+    const songRow = await env.DB.prepare(
+      "SELECT * FROM karaoke_songs WHERE id = ? AND slug = ?",
+    )
+      .bind(id, slug)
+      .first();
+    if (!songRow) return json({ error: "Lag fannst ekki" }, 404);
+    const song = rowToSong(songRow as Record<string, unknown>);
 
-    songs[idx].status = "transcribing";
-    await saveKaraokeSongs(env, slug, songs);
+    // Mark as transcribing
+    await env.DB.prepare(
+      "UPDATE karaoke_songs SET status = 'transcribing' WHERE id = ?",
+    )
+      .bind(id)
+      .run();
 
     try {
-      const audioKey = `karaoke:audio:${slug}:${id}`;
-      let audioB64: string | null = null;
-      if (env.QUIZ_DATA) {
-        audioB64 = await env.QUIZ_DATA.get(audioKey);
-      } else {
-        audioB64 = memoryKaraokeAudio.get(audioKey) ?? null;
-      }
-      if (!audioB64) {
-        songs[idx].status = "error";
-        await saveKaraokeSongs(env, slug, songs);
+      // Load audio from R2
+      const obj = await env.MEDIA_BUCKET.get(song.audioKey);
+      if (!obj) {
+        await env.DB.prepare(
+          "UPDATE karaoke_songs SET status = 'error' WHERE id = ?",
+        )
+          .bind(id)
+          .run();
         return json({ error: "Hljóðskrá fannst ekki" }, 404);
       }
 
-      const raw = audioB64.includes(",") ? audioB64.split(",")[1] : audioB64;
+      const audioBytes = await obj.arrayBuffer();
+      const audioB64 = btoa(
+        String.fromCharCode(...new Uint8Array(audioBytes)),
+      );
 
       const result = (await (env.AI as any).run("@cf/openai/whisper-large-v3-turbo", {
-        audio: raw,
+        audio: audioB64,
         initial_prompt: "Icelandic birthday song karaoke lyrics and party speech.",
-        prefix: `${songs[idx].title}${songs[idx].artist ? ` by ${songs[idx].artist}` : ""}`,
+        prefix: `${song.title}${song.artist ? ` by ${song.artist}` : ""}`,
       })) as {
         text?: string;
         words?: { word: string; start: number; end: number }[];
@@ -228,25 +263,34 @@ export async function handleKaraokeRoutes(
             .map((w, i) => ({ word: w, start: i * 0.5, end: i * 0.5 + 0.4 }));
 
       const transcriptText = fallbackText || segments.map((x) => x.word).join(" ");
-      songs[idx].lyrics = segments;
-      songs[idx].transcription = transcriptText;
-      songs[idx].vtt = segmentsToVtt(segments);
-      songs[idx].status = "ready";
-      await saveKaraokeSongs(env, slug, songs);
+      const vtt = segmentsToVtt(segments);
+
+      // Update D1 with transcription data
+      await env.DB.prepare(
+        `UPDATE karaoke_songs
+         SET lyrics = ?, transcription = ?, vtt = ?, status = 'ready'
+         WHERE id = ?`,
+      )
+        .bind(JSON.stringify(segments), transcriptText, vtt, id)
+        .run();
 
       return json({
         success: true,
         segmentCount: segments.length,
-        transcription: songs[idx].transcription,
-        vtt: songs[idx].vtt,
+        transcription: transcriptText,
+        vtt,
       });
     } catch (err) {
-      songs[idx].status = "error";
-      await saveKaraokeSongs(env, slug, songs);
+      await env.DB.prepare(
+        "UPDATE karaoke_songs SET status = 'error' WHERE id = ?",
+      )
+        .bind(id)
+        .run();
       return json({ error: "Umritun mistókst", detail: String(err) }, 500);
     }
   }
 
+  // ── POST manual lyrics ──────────────────────────────────────
   if (url.pathname === "/api/karaoke/lyrics" && request.method === "POST") {
     const slug = slugify(url.searchParams.get("slug") || "omars50");
     const id = url.searchParams.get("id");
@@ -254,15 +298,23 @@ export async function handleKaraokeRoutes(
     const body = (await request.json()) as { lyrics?: string };
     if (!body.lyrics) return json({ error: "lyrics vantar" }, 400);
 
-    const songs = await loadKaraokeSongs(env, slug);
-    const idx = songs.findIndex((s) => s.id === id);
-    if (idx === -1) return json({ error: "Lag fannst ekki" }, 404);
-    songs[idx].manualLyrics = body.lyrics;
-    if (songs[idx].status === "uploaded") songs[idx].status = "ready";
-    await saveKaraokeSongs(env, slug, songs);
+    const existing = await env.DB.prepare(
+      "SELECT id, status FROM karaoke_songs WHERE id = ? AND slug = ?",
+    )
+      .bind(id, slug)
+      .first<{ id: string; status: string }>();
+    if (!existing) return json({ error: "Lag fannst ekki" }, 404);
+
+    const newStatus = existing.status === "uploaded" ? "ready" : existing.status;
+    await env.DB.prepare(
+      "UPDATE karaoke_songs SET manual_lyrics = ?, status = ? WHERE id = ?",
+    )
+      .bind(body.lyrics, newStatus, id)
+      .run();
     return json({ success: true });
   }
 
+  // ── DELETE song ─────────────────────────────────────────────
   if (url.pathname === "/api/karaoke/song" && request.method === "DELETE") {
     if (!isAdmin(request, env)) {
       return json({ error: "Aðgangur ekki leyfður" }, 401);
@@ -271,20 +323,23 @@ export async function handleKaraokeRoutes(
     const id = url.searchParams.get("id");
     if (!id) return json({ error: "id vantar" }, 400);
 
-    const songs = await loadKaraokeSongs(env, slug);
-    const song = songs.find((s) => s.id === id);
-    if (!song) return json({ error: "Lag fannst ekki" }, 404);
-    if (song.preset) return json({ error: "Ekki má eyða preset lagi" }, 400);
-
-    const filtered = songs.filter((s) => s.id !== id);
-    await saveKaraokeSongs(env, slug, filtered);
-
-    const audioKey = `karaoke:audio:${slug}:${id}`;
-    if (env.QUIZ_DATA) {
-      await env.QUIZ_DATA.delete(audioKey);
-    } else {
-      memoryKaraokeAudio.delete(audioKey);
+    // Check for presets (can't be deleted from D1, they're hardcoded)
+    const presets = presetKaraokeSongs();
+    if (presets.some((p) => p.id === id)) {
+      return json({ error: "Ekki má eyða preset lagi" }, 400);
     }
+
+    const songRow = await env.DB.prepare(
+      "SELECT audio_key FROM karaoke_songs WHERE id = ? AND slug = ?",
+    )
+      .bind(id, slug)
+      .first<{ audio_key: string }>();
+    if (!songRow) return json({ error: "Lag fannst ekki" }, 404);
+
+    if (songRow.audio_key) {
+      await env.MEDIA_BUCKET.delete(songRow.audio_key);
+    }
+    await env.DB.prepare("DELETE FROM karaoke_songs WHERE id = ?").bind(id).run();
 
     return json({ success: true, deleted: id });
   }

@@ -60,7 +60,30 @@ function createMockDB() {
   };
 }
 
-const mockEnv = { DB: createMockDB(), ADMIN_PASSWORD: "changeme" } as any;
+// Lightweight in-memory R2 mock for unit tests
+function createMockR2() {
+  const store = new Map<string, { bytes: ArrayBuffer; httpMetadata?: Record<string, string> }>();
+  return {
+    async put(key: string, data: ArrayBuffer | Uint8Array, opts?: { httpMetadata?: Record<string, string> }) {
+      const buf = data instanceof Uint8Array ? data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) : data;
+      store.set(key, { bytes: buf, httpMetadata: opts?.httpMetadata });
+    },
+    async get(key: string) {
+      const entry = store.get(key);
+      if (!entry) return null;
+      return {
+        arrayBuffer: async () => entry.bytes,
+        body: entry.bytes,
+        httpMetadata: entry.httpMetadata,
+      };
+    },
+    async delete(key: string) {
+      store.delete(key);
+    },
+  };
+}
+
+const mockEnv = { DB: createMockDB(), MEDIA_BUCKET: createMockR2(), ADMIN_PASSWORD: "changeme" } as any;
 
 async function postJson(
   path: string,

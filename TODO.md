@@ -68,6 +68,10 @@ Last updated: 2026-02-17 (ui-zone refactor sync)
    - Quiz answer submit
    - Event creation from dashboard context
 3. Improve generated OpenAPI detail (richer request/response schemas per route).
+4. Roll out same karaoke system to `1976.eyjar.app`:
+   - align API routes and storage model
+   - include preset birthday song + chord support
+   - verify deploy and parity smoke test
 
 ## Next Technical Upgrades
 

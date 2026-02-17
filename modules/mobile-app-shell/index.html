@@ -1195,6 +1195,7 @@ body { font-family: var(--font-body); background: var(--bg-dark); color: var(--t
           <div class="link-list">
             <a class="btn primary" href="https://facebook.com/events" target="_blank" rel="noreferrer">Facebook-viðburður</a>
             <a class="btn" href="https://maps.google.com/?q=Reykjav%C3%ADk" target="_blank" rel="noreferrer">Leiðarlýsing</a>
+            <a class="btn" href="https://1976.eyjar.app" target="_blank" rel="noreferrer">Árgangsmót 1976</a>
           </div>
           <div style="margin-top:0.8rem;" class="muted">
             <div class="time-item"><b>18:00</b> Hurðar opna + velkomin drykkur</div>
@@ -2560,25 +2561,193 @@ function initInteractions(root) {
   }
   loadSelfieGallery();
 
-  // ── MyKaraoke ─────────────────────────────────────
+  initKaraokeModule({
+    root,
+    currentSlug,
+    karaokeTitle,
+    karaokeArtist,
+    karaokeAddedBy,
+    karaokeFile,
+    karaokeManualLyrics,
+    karaokeUploadBtn,
+    karaokeStatus,
+    karaokeSongList,
+    karaokeUploadView,
+    karaokePlayerView,
+    karaokeLyrics,
+    karaokeAudio,
+    karaokeNowTitle,
+    karaokeNowArtist,
+    karaokePlayBtn,
+    karaokeSeek,
+    karaokeTime,
+    karaokeBackBtn,
+    karaokeFullscreenBtn,
+    karaokeFullscreen,
+    karaokeFsClose,
+    karaokeFsLyrics,
+    karaokeChords,
+    karaokeFsChords,
+    karaokeFsPlay,
+    karaokeFsSeek,
+    karaokeFsTime,
+  });
+
+  refreshStats();
+}
+
+function initKaraokeModule({
+  currentSlug,
+  karaokeTitle,
+  karaokeArtist,
+  karaokeAddedBy,
+  karaokeFile,
+  karaokeManualLyrics,
+  karaokeUploadBtn,
+  karaokeStatus,
+  karaokeSongList,
+  karaokeUploadView,
+  karaokePlayerView,
+  karaokeLyrics,
+  karaokeAudio,
+  karaokeNowTitle,
+  karaokeNowArtist,
+  karaokePlayBtn,
+  karaokeSeek,
+  karaokeTime,
+  karaokeBackBtn,
+  karaokeFullscreenBtn,
+  karaokeFullscreen,
+  karaokeFsClose,
+  karaokeFsLyrics,
+  karaokeChords,
+  karaokeFsChords,
+  karaokeFsPlay,
+  karaokeFsSeek,
+  karaokeFsTime,
+}) {
   let karaokeFileData = null;
-  let karaokeCurrentSong = null;
   let karaokeLyricsData = [];
   let karaokeAnimFrame = null;
 
-  function renderKaraokeChords(song) {
-    const blocks = [karaokeChords, karaokeFsChords].filter(Boolean);
-    blocks.forEach((container) => {
-      if (!song || !Array.isArray(song.chords) || !song.chords.length) {
-        container.innerHTML = '<div class="muted" style="font-size:0.78rem;">Engin gítargrip skráð fyrir þetta lag.</div>';
-        return;
+  const karaokeApi = {
+    async listSongs() {
+      const res = await fetch('/api/karaoke/songs?slug=' + encodeURIComponent(currentSlug));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gat ekki hlaðið lögum');
+      return data.songs || [];
+    },
+    async getSongMeta(songId) {
+      const res = await fetch('/api/karaoke/song?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lag fannst ekki');
+      return data;
+    },
+    async getSongAudio(songId) {
+      const res = await fetch('/api/karaoke/audio?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Hljóð fannst ekki');
+      return data.audioBase64;
+    },
+  };
+
+  const karaokeRender = {
+    chords(song) {
+      const blocks = [karaokeChords, karaokeFsChords].filter(Boolean);
+      blocks.forEach((container) => {
+        if (!song || !Array.isArray(song.chords) || !song.chords.length) {
+          container.innerHTML = '<div class="muted" style="font-size:0.78rem;">Engin gítargrip skráð fyrir þetta lag.</div>';
+          return;
+        }
+        container.innerHTML = [
+          '<div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Gítargrip</div>',
+          '<div class="row">' + song.chords.map((ch) => '<span class="karaoke-chord">' + ch + '</span>').join('') + '</div>'
+        ].join('');
+      });
+    },
+    lyrics(container, lyrics, manualLyrics) {
+      if (!container) return;
+      if (lyrics && lyrics.length) {
+        container.innerHTML = lyrics.map((w, i) =>
+          '<span class="word" data-word-idx="' + i + '">' + w.word + '</span>'
+        ).join(' ');
+      } else if (manualLyrics) {
+        container.innerHTML = manualLyrics.split('\n').map((line) =>
+          '<div style="margin-bottom:0.5em;">' + line + '</div>'
+        ).join('');
+      } else {
+        container.innerHTML = '<div class="muted">Enginn lagatexti tiltækur</div>';
       }
-      container.innerHTML = [
-        '<div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Gítargrip</div>',
-        '<div class="row">' + song.chords.map((ch) => '<span class="karaoke-chord">' + ch + '</span>').join('') + '</div>'
-      ].join('');
-    });
-  }
+    },
+    songList(songs, onSelect) {
+      if (!karaokeSongList) return;
+      karaokeSongList.innerHTML = songs.map((s) =>
+        '<div class="karaoke-song-item" data-song-id="' + s.id + '">' +
+          '<div class="song-info"><div class="song-title">' + s.title + '</div>' +
+          '<div class="song-artist">' + (s.artist || s.addedBy) + '</div></div>' +
+          '<span class="karaoke-badge ' + s.status + '">' +
+          (s.status === 'ready' ? 'Tilbúið' : s.status === 'transcribing' ? 'Umritun...' : s.status === 'error' ? 'Villa' : 'Hlaðið') +
+          '</span></div>'
+      ).join('');
+      karaokeSongList.querySelectorAll('.karaoke-song-item').forEach((el) => {
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          onSelect(el.dataset.songId);
+        });
+      });
+    },
+  };
+
+  const karaokePlayback = {
+    sync(currentTime) {
+      if (!karaokeLyricsData.length) return;
+      const containers = [karaokeLyrics, karaokeFsLyrics].filter(Boolean);
+      containers.forEach((container) => {
+        const words = container.querySelectorAll('.word');
+        words.forEach((el, i) => {
+          const w = karaokeLyricsData[i];
+          if (!w) return;
+          el.classList.remove('active', 'past');
+          if (currentTime >= w.start && currentTime <= w.end) el.classList.add('active');
+          else if (currentTime > w.end) el.classList.add('past');
+        });
+        const activeEl = container.querySelector('.word.active');
+        if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    },
+    startSyncLoop() {
+      if (karaokeAnimFrame) cancelAnimationFrame(karaokeAnimFrame);
+      function loop() {
+        if (karaokeAudio && !karaokeAudio.paused) {
+          karaokePlayback.sync(karaokeAudio.currentTime);
+          const dur = karaokeAudio.duration || 1;
+          const pct = (karaokeAudio.currentTime / dur) * 100;
+          if (karaokeSeek) karaokeSeek.value = pct;
+          if (karaokeFsSeek) karaokeFsSeek.value = pct;
+          const m = Math.floor(karaokeAudio.currentTime / 60);
+          const s = Math.floor(karaokeAudio.currentTime % 60);
+          const timeStr = m + ':' + String(s).padStart(2, '0');
+          if (karaokeTime) karaokeTime.textContent = timeStr;
+          if (karaokeFsTime) karaokeFsTime.textContent = timeStr;
+        }
+        karaokeAnimFrame = requestAnimationFrame(loop);
+      }
+      loop();
+    },
+    togglePlay() {
+      if (!karaokeAudio || !karaokeAudio.src) return;
+      if (karaokeAudio.paused) {
+        karaokeAudio.play();
+        if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#10074;&#10074;';
+        if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#10074;&#10074;';
+        karaokePlayback.startSyncLoop();
+      } else {
+        karaokeAudio.pause();
+        if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
+        if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
+      }
+    },
+  };
 
   if (karaokeFile) karaokeFile.addEventListener('change', (ev) => {
     ev.stopPropagation();
@@ -2624,7 +2793,6 @@ function initInteractions(root) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Mistókst');
         if (karaokeStatus) karaokeStatus.textContent = 'Lag hlaðið upp! Umritun í gangi...';
-        // Auto-transcribe
         try {
           await fetch('/api/karaoke/transcribe?slug=' + encodeURIComponent(currentSlug) + '&id=' + data.song.id, { method: 'POST' });
         } catch {}
@@ -2636,7 +2804,6 @@ function initInteractions(root) {
           });
         }
       } else if (manualLyrics) {
-        // Text-only mode: create placeholder song (no audio upload needed with manual lyrics)
         if (karaokeStatus) karaokeStatus.textContent = 'Lagatexti eingöngu — hljóðskrá vantar til að spila.';
       }
       if (karaokeTitle) karaokeTitle.value = '';
@@ -2654,44 +2821,21 @@ function initInteractions(root) {
   async function loadKaraokeSongs() {
     if (!karaokeSongList) return;
     try {
-      const res = await fetch('/api/karaoke/songs?slug=' + encodeURIComponent(currentSlug));
-      const data = await res.json();
-      if (!res.ok) return;
-      const songs = data.songs || [];
-      karaokeSongList.innerHTML = songs.map(s =>
-        '<div class="karaoke-song-item" data-song-id="' + s.id + '">' +
-          '<div class="song-info"><div class="song-title">' + s.title + '</div>' +
-          '<div class="song-artist">' + (s.artist || s.addedBy) + '</div></div>' +
-          '<span class="karaoke-badge ' + s.status + '">' +
-          (s.status === 'ready' ? 'Tilbúið' : s.status === 'transcribing' ? 'Umritun...' : s.status === 'error' ? 'Villa' : 'Hlaðið') +
-          '</span></div>'
-      ).join('');
-      karaokeSongList.querySelectorAll('.karaoke-song-item').forEach(el => {
-        el.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          openKaraokePlayer(el.dataset.songId);
-        });
-      });
+      const songs = await karaokeApi.listSongs();
+      karaokeRender.songList(songs, openKaraokePlayer);
     } catch {}
   }
 
   async function openKaraokePlayer(songId) {
     if (!karaokePlayerView || !karaokeAudio) return;
     try {
-      const metaRes = await fetch('/api/karaoke/song?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId);
-      const meta = await metaRes.json();
-      if (!metaRes.ok) return;
-      karaokeCurrentSong = meta;
+      const meta = await karaokeApi.getSongMeta(songId);
       karaokeLyricsData = meta.lyrics || [];
       if (karaokeNowTitle) karaokeNowTitle.textContent = meta.title;
       if (karaokeNowArtist) karaokeNowArtist.textContent = meta.artist || meta.addedBy || '';
-      // Set audio source when available
       karaokeAudio.pause();
       if (meta.hasAudio) {
-        const audioRes = await fetch('/api/karaoke/audio?slug=' + encodeURIComponent(currentSlug) + '&id=' + songId);
-        const audio = await audioRes.json();
-        if (!audioRes.ok) return;
-        karaokeAudio.src = audio.audioBase64;
+        karaokeAudio.src = await karaokeApi.getSongAudio(songId);
         karaokeAudio.load();
         if (karaokePlayBtn) karaokePlayBtn.disabled = false;
         if (karaokeFsPlay) karaokeFsPlay.disabled = false;
@@ -2704,96 +2848,21 @@ function initInteractions(root) {
       }
       if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
       if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
-      // Render lyrics
-      renderKaraokeLyrics(karaokeLyrics, karaokeLyricsData, meta.manualLyrics);
-      if (karaokeFsLyrics) renderKaraokeLyrics(karaokeFsLyrics, karaokeLyricsData, meta.manualLyrics);
-      renderKaraokeChords(meta);
-      // Show player
+      karaokeRender.lyrics(karaokeLyrics, karaokeLyricsData, meta.manualLyrics);
+      if (karaokeFsLyrics) karaokeRender.lyrics(karaokeFsLyrics, karaokeLyricsData, meta.manualLyrics);
+      karaokeRender.chords(meta);
       karaokePlayerView.classList.add('active');
       if (karaokeUploadView) karaokeUploadView.style.display = 'none';
     } catch {}
   }
 
-  function renderKaraokeLyrics(container, lyrics, manualLyrics) {
-    if (!container) return;
-    if (lyrics && lyrics.length) {
-      container.innerHTML = lyrics.map((w, i) =>
-        '<span class="word" data-word-idx="' + i + '">' + w.word + '</span>'
-      ).join(' ');
-    } else if (manualLyrics) {
-      container.innerHTML = manualLyrics.split('\n').map(line =>
-        '<div style="margin-bottom:0.5em;">' + line + '</div>'
-      ).join('');
-    } else {
-      container.innerHTML = '<div class="muted">Enginn lagatexti tiltækur</div>';
-    }
-  }
+  if (karaokePlayBtn) karaokePlayBtn.addEventListener('click', (ev) => { ev.stopPropagation(); karaokePlayback.togglePlay(); });
+  if (karaokeFsPlay) karaokeFsPlay.addEventListener('click', (ev) => { ev.stopPropagation(); karaokePlayback.togglePlay(); });
 
-  function updateKaraokeLyrics(currentTime) {
-    if (!karaokeLyricsData.length) return;
-    const containers = [karaokeLyrics, karaokeFsLyrics].filter(Boolean);
-    containers.forEach(container => {
-      const words = container.querySelectorAll('.word');
-      words.forEach((el, i) => {
-        const w = karaokeLyricsData[i];
-        if (!w) return;
-        el.classList.remove('active', 'past');
-        if (currentTime >= w.start && currentTime <= w.end) {
-          el.classList.add('active');
-        } else if (currentTime > w.end) {
-          el.classList.add('past');
-        }
-      });
-      // Auto-scroll to active word
-      const activeEl = container.querySelector('.word.active');
-      if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  }
-
-  function startLyricsSync() {
-    if (karaokeAnimFrame) cancelAnimationFrame(karaokeAnimFrame);
-    function loop() {
-      if (karaokeAudio && !karaokeAudio.paused) {
-        updateKaraokeLyrics(karaokeAudio.currentTime);
-        const dur = karaokeAudio.duration || 1;
-        const pct = (karaokeAudio.currentTime / dur) * 100;
-        if (karaokeSeek) karaokeSeek.value = pct;
-        if (karaokeFsSeek) karaokeFsSeek.value = pct;
-        const m = Math.floor(karaokeAudio.currentTime / 60);
-        const s = Math.floor(karaokeAudio.currentTime % 60);
-        const timeStr = m + ':' + String(s).padStart(2, '0');
-        if (karaokeTime) karaokeTime.textContent = timeStr;
-        if (karaokeFsTime) karaokeFsTime.textContent = timeStr;
-      }
-      karaokeAnimFrame = requestAnimationFrame(loop);
-    }
-    loop();
-  }
-
-  function toggleKaraokePlay() {
-    if (!karaokeAudio) return;
-    if (!karaokeAudio.src) return;
-    if (karaokeAudio.paused) {
-      karaokeAudio.play();
-      if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#10074;&#10074;';
-      if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#10074;&#10074;';
-      startLyricsSync();
-    } else {
-      karaokeAudio.pause();
-      if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
-      if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
-    }
-  }
-
-  if (karaokePlayBtn) karaokePlayBtn.addEventListener('click', (ev) => { ev.stopPropagation(); toggleKaraokePlay(); });
-  if (karaokeFsPlay) karaokeFsPlay.addEventListener('click', (ev) => { ev.stopPropagation(); toggleKaraokePlay(); });
-
-  [karaokeSeek, karaokeFsSeek].forEach(seek => {
+  [karaokeSeek, karaokeFsSeek].forEach((seek) => {
     if (seek) seek.addEventListener('input', (ev) => {
       ev.stopPropagation();
-      if (karaokeAudio && karaokeAudio.duration) {
-        karaokeAudio.currentTime = (seek.value / 100) * karaokeAudio.duration;
-      }
+      if (karaokeAudio && karaokeAudio.duration) karaokeAudio.currentTime = (seek.value / 100) * karaokeAudio.duration;
     });
   });
 
@@ -2806,7 +2875,7 @@ function initInteractions(root) {
     if (karaokePlayBtn) karaokePlayBtn.innerHTML = '&#9654;';
     if (karaokePlayBtn) karaokePlayBtn.disabled = false;
     if (karaokeFsPlay) karaokeFsPlay.disabled = false;
-    renderKaraokeChords(null);
+    karaokeRender.chords(null);
     loadKaraokeSongs();
   });
 
@@ -2824,10 +2893,8 @@ function initInteractions(root) {
     if (karaokeFsPlay) karaokeFsPlay.innerHTML = '&#9654;';
   });
 
-  renderKaraokeChords(null);
+  karaokeRender.chords(null);
   loadKaraokeSongs();
-
-  refreshStats();
 }
 
 function initThemeSelector() {
