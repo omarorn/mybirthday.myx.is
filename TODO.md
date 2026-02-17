@@ -19,18 +19,22 @@ Last updated: 2026-02-17
    - `npm run lint`
    - `npm run build` (Wrangler dry-run bundle check)
    - full gate verified locally: `lint + build + typecheck + test` all passing.
+7. Expanded API regression tests (`tests/unit/worker-validation.test.ts`) for critical routes:
+   - `/api/rsvp` (success + validation failure)
+   - `/api/quiz/answer` (success + bounds failure)
+   - `/api/events/create` (success + time validation failure)
+   - `/api/photowall/item` (auth failure + success)
+   - `/api/planner/apply` (required fields + success)
+   - `/api/hosting/signup` (invalid input + success)
 
 ## Current Priorities
 
-1. Expand test coverage for all critical API routes:
-   - `/api/rsvp`
-   - `/api/quiz/answer`
-   - `/api/events/create`
-   - `/api/photowall/item`
-   - `/api/planner/apply`
-   - `/api/hosting/signup`
-2. Clean up documentation drift:
+1. Clean up documentation drift:
    - align `README.md` + `CLAUDE.md` with actual architecture (raw Worker + vanilla SPA).
+2. Add E2E smoke coverage (optional, Playwright) for core user flows:
+   - RSVP submit
+   - Quiz answer submit
+   - Event creation from dashboard context
 
 ## Next Technical Upgrades
 
