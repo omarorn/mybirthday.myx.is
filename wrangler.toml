@@ -18,6 +18,15 @@ fallthrough = true
 binding = "QUIZ_DATA"
 id = "3ab11a174e29413484c758a94ba60faa"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "its_my_birthday_db"
+database_id = "4b088586-b24f-45d6-9728-f255d173800e"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "its-my-birthday-media"
+
 [ai]
 binding = "AI"
 
